@@ -27,9 +27,19 @@ button { cursor: pointer; }
 .details .markdownPayload { overflow-wrap: anywhere; }
 .details .markdownPayload pre { max-width: 100%; overflow: auto; }
 .details dd { overflow-wrap: anywhere; }
+.cell-content, .cell-description { display: flex; align-items: center; min-width: 0; }
+.cell-content { justify-content: space-between; gap: 8px; }
+.cell-description { flex: 1; gap: 8px; overflow: hidden; }
+.group-row td { padding: 0 !important; border: 0; }
+tr[data-search-match='false'] { opacity: 0.24; }
+.record-details .markdownPayload, .record-details dd { overflow-wrap: anywhere; }
+@container trajectory-table (max-width: 620px) {
+  .cell-content > div:last-child, .metric-columns { width: 160px; gap: 4px; }
+  .cell-content > div:last-child > span, .metric-columns > span { width: 37px; overflow: hidden; text-overflow: ellipsis; }
+}
 @media (max-width: 760px) {
   .session-header { align-items: flex-start; flex-direction: column; }
   .header-actions { width: 100%; justify-content: flex-start; }
   .session-header h1 { max-width: calc(100vw - 40px); }
-  .details { position: absolute; inset: 0; z-index: 8; width: 100% !important; }
+  .record-details { position: absolute; inset: 0; z-index: 8; width: 100% !important; max-width: none; }
 }

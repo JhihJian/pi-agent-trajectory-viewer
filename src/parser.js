@@ -125,10 +125,10 @@ function buildRows(rows) {
           toolName: block.name,
         })),
         assistantMetrics: {
-          timingRecorded: duration !== null,
-          stepStartTime: timeOf(row),
-          firstTokenTime: timeOf(row),
-          completedTime: timeOf(row),
+          timingRecorded: false,
+          stepStartTime: null,
+          firstTokenTime: null,
+          completedTime: null,
           usageProvided: Boolean(message.usage),
           outputTokens: Number.isFinite(message.usage?.output) ? message.usage.output : null,
         },
@@ -137,6 +137,7 @@ function buildRows(rows) {
       for (const call of calls) {
         const tool = {
           ...cellBase('tool', row, ++index, call.name || 'Tool call'),
+          recordId: call.id || `${row.id ?? 'record'}:tool:${index}`,
           text: call.name || 'Tool call',
           callId: call.id,
           toolName: call.name,
@@ -165,6 +166,7 @@ function buildRows(rows) {
         current = ensureTurn(turns, current, turns.length + 1)
         const cell = {
           ...cellBase('tool', row, index, result.toolName || 'Tool result'),
+          recordId: result.toolCallId || row.id || `tool:${index}`,
           callId: result.toolCallId,
           toolName: result.toolName,
           outputDetail: output,

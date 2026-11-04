@@ -8,7 +8,8 @@
 - 按当前 `parentId` 分支展示 User、Assistant、Tool 和 Context 轨迹
 - 展示 Assistant thinking、工具参数、工具结果、错误状态和 usage
 - 复用 deepseek harness `ui-trajectory` 的表格、时间线、工具栏、详情面板和主题样式
-- 支持轨迹搜索、Turn 折叠、记录详情和响应式移动端布局
+- 支持轨迹搜索（未命中记录淡化）、Turn 和工具调用折叠、记录详情和响应式移动端布局
+- Pi 未记录首 token 时间时不推算 assistant 时间指标
 
 文件只在浏览器内解析，不上传到服务端。
 

@@ -22,16 +22,15 @@ import './app.css'
 const kindLabel = { user: 'User', message: 'Assistant', tool: 'Tool', compacted: 'Context' }
 const kindClass = { user: tableCss.user, message: tableCss.assistantVioletBright, tool: tableCss.toolAmber, compacted: tableCss.compacted }
 
-function Toolbar({ query, setQuery, actualDuration, setActualDuration, onOpen }) {
+function Toolbar({ query, setQuery, actualDuration, setActualDuration, turnsExpanded, onToggleTurns, callsExpanded, setCallsExpanded }) {
   return <div className={toolbarCss.root} role="toolbar" aria-label="Trajectory toolbar">
     <div className={toolbarCss.inner}>
       <div className={toolbarCss.actions}>
         <button className={toolbarCss.toggle} type="button" aria-pressed={actualDuration} title="Use recorded duration" onClick={() => setActualDuration(!actualDuration)}>
           <Clock3 className={toolbarCss.toggleIcon} size={12} /> Duration
         </button>
-        <button className={toolbarCss.action} type="button" title="Open another JSONL" onClick={onOpen}>
-          <FolderOpen className={toolbarCss.actionIcon} size={12} /> Open
-        </button>
+        <button className={toolbarCss.toggle} type="button" aria-pressed={turnsExpanded} title={turnsExpanded ? 'Collapse all turns' : 'Expand all turns'} onClick={onToggleTurns}>{turnsExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />} Turns</button>
+        <button className={toolbarCss.toggle} type="button" aria-pressed={callsExpanded} title={callsExpanded ? 'Collapse tool calls' : 'Expand tool calls'} onClick={() => setCallsExpanded(!callsExpanded)}>{callsExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />} Calls</button>
       </div>
       <div className={toolbarCss.search}>
         <Search size={11} className={toolbarCss.searchIcon} />
@@ -41,23 +40,33 @@ function Toolbar({ query, setQuery, actualDuration, setActualDuration, onOpen })
   </div>
 }
 
-function Timeline({ turns, selectedId, onSelect, actualDuration }) {
+function matchesSearch(cell, query) {
+  const needle = query.trim().toLowerCase()
+  return !needle || `${cell.text} ${cell.inputDetail || ''} ${cell.outputDetail || ''} ${cell.thinkingDetail || ''}`.toLowerCase().includes(needle)
+}
+
+export function Timeline({ turns, selectedId, onSelect, actualDuration, query }) {
   const spans = useMemo(() => turns.flatMap((turn) => turn.groups.flatMap((group) => group.cells.map((cell) => ({ ...cell, turn: turn.turn })))), [turns])
   const timed = spans.filter((cell) => Number.isFinite(cell.startedAt))
-  const start = timed[0]?.startedAt ?? 0
+  const start = timed.length ? Math.min(...timed.map((cell) => cell.startedAt)) : 0
   const end = Math.max(start + 1, ...timed.map((cell) => (cell.startedAt ?? start) + ((cell.timeSeconds ?? 0) * 1000 || 80)))
   const total = end - start
   return <section className={timelineCss.root} aria-label="Timeline overview">
     <div className={timelineCss.plot}>
       <div className={timelineCss.labels}><span>0 ms</span><span>{formatDuration(total / 2000)}</span><span>{formatDuration(total / 1000)}</span></div>
       <div className={timelineCss.track} tabIndex="0">
-        {timed.length === 0 ? <span className={timelineCss.empty}>No timing data</span> : <div className={timelineCss.lanes} style={{ '--trajectory-domain-left': '0%', '--trajectory-domain-width': '100%' }}>
+        {timed.length === 0 ? <span className={timelineCss.empty}>No timing data</span> : <>
+        <div className={timelineCss.turnBoundaries} style={{ '--trajectory-domain-left': '0%', '--trajectory-domain-width': '100%' }} aria-hidden="true">{turns.map((turn) => {
+          const first = turn.groups.flatMap((group) => group.cells).find((cell) => Number.isFinite(cell.startedAt))
+          return first && <span key={turn.turn} className={timelineCss.turnBoundary} data-turn={turn.turn} style={{ '--trajectory-turn-left': `${((first.startedAt - start) / total) * 100}%` }} />
+        })}</div>
+        <div className={timelineCss.lanes} style={{ '--trajectory-domain-left': '0%', '--trajectory-domain-width': '100%' }}>
           {timed.map((cell, index) => {
             const left = ((cell.startedAt - start) / total) * 100
             const duration = actualDuration ? Math.max(0.8, (((cell.timeSeconds ?? 0) * 1000) / total) * 100) : Math.max(1.4, 88 / timed.length)
-            return <button key={cell.recordId || `${cell.kind}-${index}`} className={timelineCss.span} data-timeline-span={cell.kind === 'message' ? 'message' : cell.kind} data-selected={selectedId === undefined ? undefined : selectedId === cell.recordId ? 'true' : 'false'} data-error={cell.isError ? 'true' : undefined} data-assistant-timing={cell.kind === 'message' && cell.assistantMetrics?.timingRecorded ? 'true' : undefined} data-equal-duration={!actualDuration ? 'true' : undefined} aria-label={`${kindLabel[cell.kind]} ${cell.text}`} onClick={() => onSelect(cell)} style={{ '--trajectory-span-left': `${left}%`, '--trajectory-span-width': `${duration}%`, '--trajectory-span-lane': cell.kind === 'tool' ? 1 : cell.kind === 'message' ? 0 : 2, '--trajectory-span-gap': '1px', '--trajectory-assistant-ttft': '0%' }} />
+            return <button key={cell.recordId || `${cell.kind}-${index}`} className={timelineCss.span} data-timeline-span={cell.kind === 'compacted' ? 'context' : cell.kind} data-search-match={matchesSearch(cell, query) ? 'true' : 'false'} data-selected={selectedId == null ? undefined : selectedId === cell.recordId ? 'true' : 'false'} data-error={cell.isError ? 'true' : undefined} data-assistant-timing={cell.kind === 'message' && cell.assistantMetrics?.timingRecorded ? 'true' : undefined} data-equal-duration={!actualDuration ? 'true' : undefined} aria-label={`${kindLabel[cell.kind]} ${cell.text}`} onClick={() => onSelect(cell)} style={{ '--trajectory-span-left': `${left}%`, '--trajectory-span-width': `${duration}%`, '--trajectory-span-lane': cell.kind === 'tool' ? 1 : cell.kind === 'message' ? 0 : 2, '--trajectory-span-gap': '1px', '--trajectory-assistant-ttft': '0%' }} />
           })}
-        </div>}
+        </div></>}
       </div>
     </div>
   </section>
@@ -65,9 +74,9 @@ function Timeline({ turns, selectedId, onSelect, actualDuration }) {
 
 function Metric({ value }) { return <span className={cellCss.metric}>{value ?? ''}</span> }
 
-function Cell({ cell, selected, onSelect, turnStart, turnEnd }) {
+function Cell({ cell, selected, onSelect, turnStart, turnEnd, query }) {
   const label = kindLabel[cell.kind] || cell.kind
-  return <tr tabIndex="0" data-kind={cell.kind} data-selected={selected || undefined} data-turn-start={turnStart || undefined} data-turn-end={turnEnd || undefined} data-error={cell.isError || undefined} onClick={() => onSelect(cell)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(cell) }}>
+  return <tr tabIndex="0" data-kind={cell.kind} data-search-match={matchesSearch(cell, query) ? 'true' : 'false'} data-selected={selected || undefined} data-turn-start={turnStart ? 'true' : undefined} data-turn-end={turnEnd || undefined} data-error={cell.isError || undefined} onClick={() => onSelect(cell)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(cell) } }}>
     <td className={tableCss.event}>
       {turnStart && <span className={tableCss.turnLabel}><span className={tableCss.turnLabelFull}>Turn {turnStart}</span><span className={tableCss.turnLabelCompact}>T{turnStart}</span></span>}
       <span className={tableCss.turnRail} aria-hidden="true" />
@@ -77,17 +86,17 @@ function Cell({ cell, selected, onSelect, turnStart, turnEnd }) {
       </div>
     </td>
     <td className={tableCss.content}>
-      <div className={tableCss.contentText} title={cell.text}>{cell.text}</div>
-      {cell.result && <span className={cell.isError ? `${tableCss.inlineResult} ${tableCss.error}` : tableCss.inlineResult}><span className={tableCss.arrow}>→</span>{cell.result}</span>}
+      <div className="cell-content"><div className="cell-description"><span className={tableCss.contentText} title={cell.text}>{cell.text}</span>
+      {cell.result && <span className={cell.isError ? `${tableCss.inlineResult} ${tableCss.error}` : tableCss.inlineResult}><span className={tableCss.arrow}>→</span><span className={tableCss.inlineResultText}>{cell.result}</span></span>}</div>
+      <div className={cellCss.trailing}><Metric value={cell.input} /><Metric value={cell.output} /><Metric value={cell.think} /><span className={cellCss.time}>{formatDuration(cell.timeSeconds)}</span></div></div>
     </td>
-    <td className={tableCss.content}><div className={tableCss.eventInner}><Metric value={cell.input} /><Metric value={cell.output} /><Metric value={cell.think} /><span className={tableCss.time}>{formatDuration(cell.timeSeconds)}</span></div></td>
   </tr>
 }
 
 function Detail({ cell, onClose }) {
-  if (!cell) return <aside className={tableCss.details} aria-label="Record details"><div className="empty-detail"><FileJson size={22} /><span>Select a record to inspect</span></div></aside>
+
   const content = cell.outputDetail || cell.inputDetail || ''
-  return <aside className={tableCss.details} aria-label="Record details">
+  return <aside className={`${tableCss.details} record-details`} aria-label="Record details">
     <div className={tableCss.detailsHeader}><div className={tableCss.detailsTitle}><span className={`${tableCss.kindTag} ${kindClass[cell.kind]}`}>{kindLabel[cell.kind]}</span><span className={tableCss.detailsLocation}>{cell.text}</span></div><button className={tableCss.close} type="button" aria-label="Close details" title="Close details" onClick={onClose}><X size={14} /></button></div>
     <div className={tableCss.detailTabs} role="tablist"><button className={`${tableCss.detailTab} ${tableCss.detailTabActive}`} type="button" role="tab" aria-selected="true">Overview</button><button className={tableCss.detailTab} type="button" role="tab" aria-selected="false">Raw JSON</button></div>
     <div className={tableCss.detailBody}>
@@ -101,10 +110,10 @@ function Detail({ cell, onClose }) {
   </aside>
 }
 
-function Turn({ turn, selectedId, onSelect, collapsed, onToggle }) {
+export function Turn({ turn, selectedId, onSelect, collapsed, onToggle, callsExpanded, query }) {
   return <section className={turnCss.root} data-turn={turn.turn}>
-    <div className={turnHeaderCss.root}><div className={turnHeaderCss.inner}><button className={turnHeaderCss.title} type="button" onClick={onToggle} aria-expanded={!collapsed}>{collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />} Turn {turn.turn}</button><div className={turnHeaderCss.columns}><span className={turnHeaderCss.column}>Input</span><span className={turnHeaderCss.column}>Output</span><span className={turnHeaderCss.column}>Thinking</span><span className={turnHeaderCss.column}>Time</span></div></div></div>
-    {!collapsed && <div className={turnCss.body}>{turn.groups.map((group) => <div key={group.title}><div className={groupCss.root}><span className={groupCss.title}>{group.title}</span><span className={groupCss.description}>{group.cells.length} records</span></div><table className={tableCss.table} data-scroll-ready="true"><colgroup><col className={tableCss.eventColumn} /><col className={tableCss.contentColumn} /><col className={tableCss.contentColumn} /></colgroup><tbody>{group.cells.map((cell, index) => <Cell key={cell.recordId || `${cell.index}-${index}`} cell={cell} selected={selectedId === cell.recordId} onSelect={onSelect} turnStart={index === 0 && group === turn.groups[0] ? turn.turn : undefined} turnEnd={index === group.cells.length - 1} />)}</tbody></table></div>)}</div>}
+    <div className={turnHeaderCss.root}><div className={turnHeaderCss.inner}><button className={turnHeaderCss.title} type="button" onClick={onToggle} aria-expanded={!collapsed}>{collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />} Turn {turn.turn}</button><div className={`${turnHeaderCss.columns} metric-columns`}><span className={turnHeaderCss.column}>Input</span><span className={turnHeaderCss.column}>Output</span><span className={turnHeaderCss.column}>Thinking</span><span className={turnHeaderCss.column}>Time</span></div></div></div>
+    {!collapsed && <div className={turnCss.body}><table className={tableCss.table} data-scroll-ready="true"><colgroup><col className={tableCss.eventColumn} /><col className={tableCss.contentColumn} /></colgroup><tbody>{turn.groups.map((group, groupIndex) => <React.Fragment key={`${group.title}-${groupIndex}`}><tr className="group-row"><td colSpan="2"><div className={groupCss.root}><span className={groupCss.title}>{group.title}</span><span className={groupCss.description}>{group.cells.length} records</span></div></td></tr>{group.cells.map((cell, index) => (callsExpanded || cell.kind !== 'tool') && <Cell key={cell.recordId || `${cell.index}-${index}`} cell={cell} selected={selectedId === cell.recordId} onSelect={onSelect} query={query} turnStart={index === 0 && groupIndex === 0 ? turn.turn : undefined} turnEnd={groupIndex === turn.groups.length - 1 && index === group.cells.length - 1} />)}</React.Fragment>)}</tbody></table></div>}
   </section>
 }
 
@@ -117,30 +126,28 @@ function App() {
   const [query, setQuery] = useState('')
   const [actualDuration, setActualDuration] = useState(true)
   const [collapsed, setCollapsed] = useState(new Set())
+  const [callsExpanded, setCallsExpanded] = useState(true)
 
   const openFile = () => inputRef.current?.click()
   const handleFile = async (file) => {
     if (!file) return
     try {
       const next = parsePiJsonl(await file.text())
-      setData(next); setFileName(file.name); setError(''); setSelected(null); setCollapsed(new Set())
+      setData(next); setFileName(file.name); setError(''); setSelected(null); setCollapsed(new Set()); setCallsExpanded(true)
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); setData(null) }
   }
-  const visible = useMemo(() => {
-    if (!data || !query.trim()) return data?.turns ?? []
-    const needle = query.trim().toLowerCase()
-    return data.turns.map((turn) => ({ ...turn, groups: turn.groups.map((group) => ({ ...group, cells: group.cells.filter((cell) => `${cell.text} ${cell.inputDetail || ''} ${cell.outputDetail || ''}`.toLowerCase().includes(needle)) })).filter((group) => group.cells.length > 0) })).filter((turn) => turn.groups.length > 0)
-  }, [data, query])
+  const turns = data?.turns ?? []
+  const turnsExpanded = collapsed.size === 0
 
   return <main className="app-shell">
     <input ref={inputRef} className="file-input" type="file" accept=".jsonl,application/jsonl,application/json" onChange={(event) => handleFile(event.target.files?.[0])} />
     {!data ? <section className="dropzone" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFile(event.dataTransfer.files[0]) }}><FileJson size={32} strokeWidth={1.4} /><h1>Pi Agent Trajectory</h1><p>Open a Pi Agent session JSONL file to inspect its recorded turns.</p><button type="button" className="open-button" onClick={openFile}><FolderOpen size={15} /> Open JSONL</button>{error && <p className="error-message" role="alert">{error}</p>}</section> : <div className={viewsCss.root}>
       <header className="session-header"><div><span className="eyebrow">PI AGENT SESSION</span><h1>{fileName}</h1><p>{data.header.cwd || 'Working directory unavailable'} <span>·</span> {data.header.modelId || data.header.provider || 'Recorded session'}</p></div><div className="header-actions"><span className="stat">{data.stats.turns} turns</span><span className="stat">{data.stats.tools} tools</span><button type="button" className="header-button" onClick={openFile}><FolderOpen size={14} /> Open another</button></div></header>
-      <Toolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={setActualDuration} onOpen={openFile} />
-      <Timeline turns={visible} selectedId={selected?.recordId} onSelect={setSelected} actualDuration={actualDuration} />
-      <div className={viewsCss.ledger}><div className={tableCss.split}><div className={tableCss.tablePane}>{visible.length === 0 ? <div className="no-results"><Search size={18} /> No matching records</div> : visible.map((turn) => <Turn key={turn.turn} turn={turn} selectedId={selected?.recordId} onSelect={setSelected} collapsed={collapsed.has(turn.turn)} onToggle={() => setCollapsed((previous) => { const next = new Set(previous); next.has(turn.turn) ? next.delete(turn.turn) : next.add(turn.turn); return next })} />)}</div><Detail cell={selected} onClose={() => setSelected(null)} /></div></div>
+      <Toolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={setActualDuration} turnsExpanded={turnsExpanded} onToggleTurns={() => setCollapsed(turnsExpanded ? new Set(turns.map((turn) => turn.turn)) : new Set())} callsExpanded={callsExpanded} setCallsExpanded={setCallsExpanded} />
+      <Timeline turns={turns} selectedId={selected?.recordId} onSelect={setSelected} actualDuration={actualDuration} query={query} />
+      <div className={viewsCss.ledger}><div className={tableCss.split}><div className={tableCss.tablePane}>{turns.map((turn) => <Turn key={turn.turn} turn={turn} selectedId={selected?.recordId} onSelect={setSelected} collapsed={collapsed.has(turn.turn)} callsExpanded={callsExpanded} query={query} onToggle={() => setCollapsed((previous) => { const next = new Set(previous); next.has(turn.turn) ? next.delete(turn.turn) : next.add(turn.turn); return next })} />)}</div>{selected && <Detail cell={selected} onClose={() => setSelected(null)} />}</div></div>
     </div>}
   </main>
 }
 
-createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>)
+if (typeof document !== 'undefined') createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>)

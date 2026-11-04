@@ -16,6 +16,28 @@ test('parses a Pi session into turns, assistant output, and paired tool result',
   assert.equal(cells.find((cell) => cell.kind === 'user').text, 'Read the file')
   assert.equal(cells.find((cell) => cell.kind === 'message').think, 2)
   assert.equal(cells.find((cell) => cell.kind === 'tool').result, 'Hello')
+  assert.equal(cells.find((cell) => cell.kind === 'tool').recordId, 'call-1')
+  assert.deepEqual(cells.find((cell) => cell.kind === 'message').assistantMetrics, {
+    timingRecorded: false, stepStartTime: null, firstTokenTime: null, completedTime: null,
+    usageProvided: true, outputTokens: 4,
+  })
+})
+
+test('assigns separate identities to multiple calls and preserves unavailable timing', () => {
+  const source = [
+    { type: 'session', id: 's' },
+    { type: 'message', id: 'a', parentId: 's', timestamp: '2026-01-01T00:00:01Z', message: { role: 'assistant', durationMs: 500, content: [
+      { type: 'toolCall', id: 'c1', name: 'read', arguments: {} },
+      { type: 'toolCall', id: 'c2', name: 'read', arguments: {} },
+    ] } },
+    { type: 'message', id: 'r', parentId: 'a', message: { role: 'toolResult', toolCallId: 'c2', content: [{ type: 'text', text: 'second' }] } },
+  ].map(JSON.stringify).join('\n')
+  const cells = parsePiJsonl(source).turns[0].groups[0].cells
+  assert.deepEqual(cells.map((cell) => cell.recordId), ['a', 'c1', 'c2'])
+  assert.equal(cells[2].result, 'second')
+  assert.equal(cells[0].timeSeconds, 0.5)
+  assert.equal(cells[0].assistantMetrics.firstTokenTime, null)
+  assert.equal(cells[0].assistantMetrics.timingRecorded, false)
 })
 
 test('rejects malformed or non-Pi JSONL', () => {
