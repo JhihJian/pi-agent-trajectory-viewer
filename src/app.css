@@ -6,7 +6,7 @@ html, body, #root { width: 100%; height: 100%; margin: 0; }
 body { min-width: 320px; overflow: hidden; background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font-family: var(--dsw-font-family); }
 button, input { font: inherit; }
 button { cursor: pointer; }
-.app-shell { width: 100%; height: 100%; overflow: hidden; background: var(--dsw-alias-bg-layer-1); }
+.app-shell { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; background: var(--dsw-alias-bg-layer-1); }
 .file-input { display: none; }
 .dropzone { display: flex; width: min(520px, calc(100% - 32px)); height: 100%; margin: auto; padding: 24px; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: var(--dsw-alias-label-secondary); text-align: center; }
 .dropzone h1 { margin: 0; color: var(--dsw-alias-label-primary); font: var(--dsw-font-s-strong-14); }
@@ -21,13 +21,20 @@ button { cursor: pointer; }
 .eyebrow { color: var(--dsw-alias-label-caption); font: var(--dsw-font-xxxs-strong-11); letter-spacing: 0.04em; }
 .header-actions { display: flex; align-items: center; gap: 10px; color: var(--dsw-alias-label-tertiary); font: var(--dsw-font-xxs-12); white-space: nowrap; }
 .stat { padding-right: 4px; }
-.ledger { height: calc(100% - 70px); }
+.ledger { height: auto; }
+.trajectory-shell { flex: 1; height: auto !important; min-height: 0; }
 .no-results, .empty-detail { display: flex; min-height: 180px; align-items: center; justify-content: center; gap: 8px; color: var(--dsw-alias-label-caption); font: var(--dsw-font-xs-13); }
 .empty-detail { height: 100%; min-height: 0; flex-direction: column; }
 .details .markdownPayload { overflow-wrap: anywhere; }
 .details .markdownPayload pre { max-width: 100%; overflow: auto; }
 .details dd { overflow-wrap: anywhere; }
-.cell-content, .cell-description { display: flex; align-items: center; min-width: 0; }
+.trajectory-shell .timeline-track button {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
 .cell-content { justify-content: space-between; gap: 8px; }
 .cell-description { flex: 1; gap: 8px; overflow: hidden; }
 .group-row td { padding: 0 !important; border: 0; }
@@ -41,5 +48,4 @@ tr[data-search-match='false'] { opacity: 0.24; }
   .session-header { align-items: flex-start; flex-direction: column; }
   .header-actions { width: 100%; justify-content: flex-start; }
   .session-header h1 { max-width: calc(100vw - 40px); }
-  .record-details { position: absolute; inset: 0; z-index: 8; width: 100% !important; max-width: none; }
 }

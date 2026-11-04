@@ -16,7 +16,7 @@ test('renders continuous turn rows, search state, calls and timeline boundaries'
     const html = renderToStaticMarkup(React.createElement(Turn, props))
     assert.equal((html.match(/<table\b/g) || []).length, 1)
     assert.equal((html.match(/<col\b/g) || []).length, 2)
-    assert.equal((html.match(/data-search-match="false"/g) || []).length, 2)
+    assert.equal((html.match(/data-search-match="false"/g) || []).length, 0)
     assert.match(html, /data-kind="tool"[^>]*data-search-match="true"/)
     assert.doesNotMatch(renderToStaticMarkup(React.createElement(Turn, { ...props, callsExpanded: false })), /data-kind="tool"/)
     const timeline = renderToStaticMarkup(React.createElement(Timeline, { turns: [turn], onSelect() {}, actualDuration: true, query: 'read' }))

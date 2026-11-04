@@ -45,6 +45,7 @@ function cellBase(kind, row, index, text) {
   return {
     index,
     recordId: row.id,
+    raw: row,
     kind,
     text: text || '(empty)',
     sourceSeq: index,
@@ -138,6 +139,7 @@ function buildRows(rows) {
         const tool = {
           ...cellBase('tool', row, ++index, call.name || 'Tool call'),
           recordId: call.id || `${row.id ?? 'record'}:tool:${index}`,
+          raw: { assistant: row, call },
           text: call.name || 'Tool call',
           callId: call.id,
           toolName: call.name,
@@ -159,13 +161,19 @@ function buildRows(rows) {
         tool.outputDetail = output
         tool.result = output
         tool.outputBlocks = blocksOf(result.content).map((block) => ({ type: block.type, content: jsonOf(block) }))
+        tool.raw = { ...tool.raw, result: row }
         tool.isError = result.isError === true
-        tool.timeSeconds = Number.isFinite(result.durationMs) ? result.durationMs / 1000 : null
-        tool.startedAt = timeOf(row)
+        const completedAt = timeOf(row)
+        tool.timeSeconds = Number.isFinite(result.durationMs)
+          ? result.durationMs / 1000
+          : Number.isFinite(tool.startedAt) && Number.isFinite(completedAt)
+            ? Math.max(0, (completedAt - tool.startedAt) / 1000)
+            : null
       } else {
         current = ensureTurn(turns, current, turns.length + 1)
         const cell = {
           ...cellBase('tool', row, index, result.toolName || 'Tool result'),
+          raw: { result: row },
           recordId: result.toolCallId || row.id || `tool:${index}`,
           callId: result.toolCallId,
           toolName: result.toolName,
