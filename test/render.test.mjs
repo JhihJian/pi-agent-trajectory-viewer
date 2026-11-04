@@ -7,7 +7,7 @@ import { createServer } from 'vite'
 test('renders continuous turn rows, search state, calls and timeline boundaries', async () => {
   const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
   try {
-    const { Turn, Timeline, TrajectoryTable } = await server.ssrLoadModule('/src/main.jsx')
+    const { Detail, Turn, Timeline, TrajectoryTable } = await server.ssrLoadModule('/src/main.jsx')
     const turn = { turn: 1, groups: [
       { title: 'User', cells: [{ kind: 'user', recordId: 'u', text: 'hello', startedAt: 1000 }] },
       { title: 'Step 1', cells: [{ kind: 'message', recordId: 'a', text: 'answer', startedAt: 2000 }, { kind: 'tool', recordId: 'c', text: 'read', startedAt: 3000 }] },
@@ -26,6 +26,16 @@ test('renders continuous turn rows, search state, calls and timeline boundaries'
     assert.match(timeline, /data-turn="1"/)
     assert.equal((timeline.match(/data-timeline-span=/g) || []).length, 3)
     assert.equal((timeline.match(/data-search-match="false"/g) || []).length, 2)
+
+    const longOutput = 'line '.repeat(4000)
+    const detail = renderToStaticMarkup(React.createElement(Detail, {
+      cell: { kind: 'tool', recordId: 'call-1', text: 'bash', toolName: 'bash', inputDetail: '{"command":"npm test"}', outputDetail: longOutput, result: longOutput, raw: { call: { arguments: { command: 'npm test' } }, result: {} } },
+      onClose() {},
+    }))
+    assert.match(detail, /Arguments/)
+    assert.match(detail, /Output · 1 lines/)
+    assert.match(detail, /Show full/)
+    assert.match(detail, /hidden from view/)
   } finally {
     await server.close()
   }

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ArrowUpRight, Check, Clock3, FileJson, FolderOpen, Layers3, ListCollapse, Search, ShieldCheck, X } from 'lucide-react'
+import { ArrowUpRight, Check, Clock3, Copy, FileJson, FolderOpen, Layers3, ListCollapse, Maximize2, Minimize2, Search, ShieldCheck, WrapText, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { formatDuration, formatTime, parsePiJsonl } from './parser.js'
@@ -38,6 +38,47 @@ function flattenTurns(turns) {
 function matchesSearch(cell, query) {
   const needle = query.trim().toLowerCase()
   return !needle || `${cell.text} ${cell.inputDetail || ''} ${cell.outputDetail || ''} ${cell.thinkingDetail || ''} ${cell.result || ''}`.toLowerCase().includes(needle)
+}
+
+const TOOL_PREVIEW_LIMIT = 12000
+
+function oneLine(value, limit = 110) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit)
+}
+
+function toolTarget(cell) {
+  const args = cell.raw?.call?.arguments
+  if (typeof args === 'string') return oneLine(args)
+  if (!args || typeof args !== 'object') return ''
+  const preferred = ['command', 'cmd', 'path', 'filePath', 'pattern', 'query', 'url', 'script']
+  const key = preferred.find((candidate) => typeof args[candidate] === 'string' && args[candidate].trim())
+  if (key) return oneLine(args[key])
+  const first = Object.entries(args).find(([, value]) => typeof value === 'string' && value.trim())
+  return first ? oneLine(first[1]) : oneLine(JSON.stringify(args), 110)
+}
+
+function resultSummary(value, limit = 160) {
+  return oneLine(value, limit).replace(/\n/g, ' ')
+}
+
+function formatChars(value) {
+  if (value < 1000) return `${value} chars`
+  return `${(value / 1000).toFixed(value < 10000 ? 1 : 0)}k chars`
+}
+
+function lineCount(value) {
+  return value ? value.split('\n').length : 0
+}
+
+function previewText(value, limit = TOOL_PREVIEW_LIMIT) {
+  if (value.length <= limit) return { text: value, hidden: 0 }
+  const headLength = Math.floor(limit * 0.66)
+  const tailLength = limit - headLength
+  const hidden = value.length - headLength - tailLength
+  return {
+    text: `${value.slice(0, headLength)}\n\n… ${formatChars(hidden)} hidden …\n\n${value.slice(-tailLength)}`,
+    hidden,
+  }
 }
 
 function Toolbar({ query, setQuery, actualDuration, setActualDuration, turnsExpanded, onToggleTurns, callsExpanded, setCallsExpanded }) {
@@ -81,8 +122,8 @@ export function Timeline({ turns, selectedId, onSelect, actualDuration, query })
     const range = projectedRanges.get(record)
     return { ...record, start: range.start, end: actualDuration ? range.end : range.start + 1 }
   })
-  const start = projected.length ? Math.min(...projected.map(({ start: value }) => value)) : 0
-  const end = Math.max(start + 1, ...projected.map(({ end: value }) => value))
+  const start = projected.reduce((minimum, { start: value }) => Math.min(minimum, value), projected.length ? Infinity : 0)
+  const end = projected.reduce((maximum, { end: value }) => Math.max(maximum, value), start + 1)
   const total = end - start
   return <section className={timelineCss.root} aria-label="Timeline overview">
     <div className={timelineCss.plot}>
@@ -124,13 +165,46 @@ function Cell({ record, selected, onSelect, query, activeTurn }) {
       </div>
     </td>
     <td className={tableCss.content}>
-      {cell.result ? <span className={`${tableCss.resultPreview} tool-result-preview`}><span className={tableCss.resultRequest}><span className={tableCss.contentText} title={cell.text}>{cell.text}</span></span><span className={cell.isError ? `${tableCss.inlineResult} ${tableCss.error}` : tableCss.inlineResult}><span className={tableCss.arrow}>→</span><span className={tableCss.inlineResultText}>{cell.result}</span></span></span> : <span className={tableCss.contentText} title={cell.text}>{cell.text}</span>}
+      {cell.kind === 'tool' ? <span className="tool-call-summary" title={toolTarget(cell) || cell.text}>
+        <span className="tool-call-summary-title">{toolTarget(cell) || cell.text}</span>
+        <span className={cell.isError ? 'tool-call-summary-status tool-call-summary-error' : 'tool-call-summary-status'}>{cell.isError ? 'Error' : cell.raw?.result ? (cell.result ? resultSummary(cell.result) : 'Empty result') : 'No result recorded'}</span>
+      </span> : cell.result ? <span className={`${tableCss.resultPreview} tool-result-preview`}><span className={tableCss.resultRequest}><span className={tableCss.contentText} title={cell.text}>{cell.text}</span></span><span className={cell.isError ? `${tableCss.inlineResult} ${tableCss.error}` : tableCss.inlineResult}><span className={tableCss.arrow}>→</span><span className={tableCss.inlineResultText}>{resultSummary(cell.result)}</span></span></span> : <span className={tableCss.contentText} title={cell.text}>{cell.text}</span>}
     </td>
   </tr>
 }
 
-function Detail({ cell, onClose }) {
+function TextOutput({ value, label, previewLimit = TOOL_PREVIEW_LIMIT }) {
+  const [expanded, setExpanded] = useState(false)
+  const [wrap, setWrap] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const preview = previewText(value, previewLimit)
+  const displayed = expanded ? value : preview.text
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1400)
+    } catch {
+      setCopied(false)
+    }
+  }
+  return <div className="long-output" data-wrap={wrap ? 'true' : 'false'}>
+    <div className="long-output-toolbar">
+      <span className="long-output-meta">{label} · {lineCount(value)} lines · {formatChars(value.length)}</span>
+      <div className="long-output-actions">
+        <button type="button" className="output-action" onClick={() => setWrap(!wrap)} aria-pressed={wrap} title={wrap ? 'Keep long lines on one line' : 'Wrap long lines'}><WrapText size={13} /> {wrap ? 'Wrapped' : 'Wrap'}</button>
+        <button type="button" className="output-action" onClick={copy} title={`Copy ${label.toLowerCase()}`}><Copy size={13} /> {copied ? 'Copied' : 'Copy'}</button>
+        {preview.hidden > 0 && <button type="button" className="output-action output-action-primary" onClick={() => setExpanded(!expanded)}>{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />} {expanded ? 'Collapse' : 'Show full'}</button>}
+      </div>
+    </div>
+    <pre className="long-output-content">{displayed || '∅ Empty output'}</pre>
+    {preview.hidden > 0 && !expanded && <div className="long-output-note">Showing the beginning and end. {formatChars(preview.hidden)} hidden from view.</div>}
+  </div>
+}
+
+export function Detail({ cell, onClose }) {
   const [tab, setTab] = useState('overview')
+  const [resultBlocksOpen, setResultBlocksOpen] = useState(false)
   const closeRef = useRef(null)
   useEffect(() => {
     const previousFocus = document.activeElement
@@ -138,6 +212,8 @@ function Detail({ cell, onClose }) {
     return () => { if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true }) }
   }, [])
   const content = cell.outputDetail || cell.inputDetail || ''
+  const hasToolResult = cell.kind === 'tool' && Boolean(cell.raw?.result)
+  const toolStatus = cell.isError ? 'Error' : !hasToolResult ? 'No result recorded' : cell.outputDetail ? 'Completed' : 'Empty result'
   const markdown = (value, className = tableCss.markdownPreview) => <div className={`${className} detail-markdown`}><ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown></div>
   const section = (title, children, className = '') => <section className={`${tableCss.overviewSection} ${className}`.trim()}><h3 className={tableCss.overviewHeading}>{title}</h3><div className={tableCss.overviewPreview}>{children}</div></section>
   return <aside className={`${tableCss.details} record-details`} aria-label="Record details" onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onClose() } }}>
@@ -149,9 +225,11 @@ function Detail({ cell, onClose }) {
         {cell.kind === 'compacted' && content && <div className={tableCss.compactedSummary}><div className={tableCss.overviewPreview}>{markdown(content)}</div></div>}
         <div className={`${tableCss.overviewSections} detail-sections`}>
           {cell.kind !== 'compacted' && cell.thinkingDetail && section('Thinking', markdown(cell.thinkingDetail))}
-          {cell.kind !== 'compacted' && content && section(cell.kind === 'user' ? 'Input' : 'Output', markdown(content))}
-          {cell.inputDetail && cell.kind === 'tool' && section('Arguments', <pre className={tableCss.jsonPayload}>{cell.inputDetail}</pre>)}
-          {cell.outputBlocks?.length > 0 && <details className="result-disclosure"><summary>Result blocks ({cell.outputBlocks.length})</summary><div className={`${tableCss.resultBlocks} ${cell.isError ? tableCss.errorPayload : ''}`.trim()}>{cell.outputBlocks.map((block, index) => <pre className={tableCss.resultBlockText} key={index}>{block.content}</pre>)}</div></details>}
+          {cell.kind === 'tool' && <div className={`tool-status tool-status-${cell.isError ? 'error' : hasToolResult ? 'complete' : 'missing'}`}><span className="tool-status-dot" />{toolStatus}</div>}
+          {cell.inputDetail && cell.kind === 'tool' && section('Arguments', <TextOutput value={cell.inputDetail} label="Arguments" previewLimit={8000} />)}
+          {cell.kind === 'tool' && section('Output', hasToolResult ? <TextOutput value={cell.outputDetail || ''} label={cell.isError ? 'Error output' : 'Output'} /> : <div className="tool-empty-output">The session does not contain a result for this call.</div>)}
+          {cell.kind !== 'compacted' && cell.kind !== 'tool' && content && section(cell.kind === 'user' ? 'Input' : 'Output', markdown(content))}
+          {cell.outputBlocks?.length > 0 && <details className="result-disclosure" open={resultBlocksOpen} onToggle={(event) => setResultBlocksOpen(event.currentTarget.open)}><summary>Raw result blocks ({cell.outputBlocks.length})</summary>{resultBlocksOpen && <div className={`${tableCss.resultBlocks} ${cell.isError ? tableCss.errorPayload : ''}`.trim()}>{cell.outputBlocks.map((block, index) => <pre className={tableCss.resultBlockText} key={index}>{block.content}</pre>)}</div>}</details>}
           {(cell.input || cell.output || cell.think) && section('Usage', <div className={tableCss.usagePanel}><section className={tableCss.usageGroup}><h4 className={tableCss.usageHeading}>Usage</h4><dl className={tableCss.overview}><div><dt>Input</dt><dd>{cell.input ?? '—'}</dd></div><div><dt>Output</dt><dd>{cell.output ?? '—'}</dd></div><div><dt>Reasoning</dt><dd>{cell.think ?? '—'}</dd></div></dl></section></div>)}
         </div>
       </>}
@@ -209,7 +287,7 @@ function App() {
   const [query, setQuery] = useState('')
   const [actualDuration, setActualDuration] = useState(true)
   const [collapsedTurns, setCollapsedTurns] = useState(new Set())
-  const [callsExpanded, setCallsExpanded] = useState(true)
+  const [callsExpanded, setCallsExpanded] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const openFile = () => inputRef.current?.click()
@@ -219,7 +297,7 @@ function App() {
     setDragging(false)
     try {
       const next = parsePiJsonl(await file.text())
-      setData(next); setFileName(file.name); setError(''); setSelected(null); setQuery(''); setCollapsedTurns(new Set()); setCallsExpanded(true)
+      setData(next); setFileName(file.name); setError(''); setSelected(null); setQuery(''); setCollapsedTurns(new Set()); setCallsExpanded(false)
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); setData(null) }
     finally { setLoading(false); if (inputRef.current) inputRef.current.value = '' }
   }
