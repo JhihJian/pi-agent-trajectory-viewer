@@ -109,14 +109,14 @@ export function Timeline({ turns, selectedId, onSelect, actualDuration, query })
   </section>
 }
 
-function Cell({ record, selected, onSelect, query }) {
+function Cell({ record, selected, onSelect, query, activeTurn }) {
   const { cell, position, turnStart, turnEnd, groupStart } = record
   const label = kindLabel[cell.kind] || cell.kind
   const searchMatch = matchesSearch(cell, query)
   return <tr tabIndex="0" aria-rowindex={position} aria-label={`${label}: ${cell.text}`} aria-selected={selected || undefined} data-kind={cell.kind} data-record-index={cell.index} data-group-start={groupStart || undefined} data-turn-start={turnStart || undefined} data-turn-end={turnEnd || undefined} data-search-match={searchMatch ? 'true' : 'false'} data-selected={selected ? 'true' : undefined} data-error={cell.isError ? 'true' : undefined} onClick={() => onSelect(cell)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(cell) } }}>
     <td className={tableCss.event}>
-      {turnStart && <span className={tableCss.turnLabel} aria-label={`Turn ${record.turn}`}><span className={tableCss.turnLabelFull}>Turn {record.turn}</span><span className={tableCss.turnLabelCompact}>T{record.turn}</span></span>}
-      <span className={tableCss.turnRail} aria-hidden="true" />
+      {turnStart && <span className={record.turn === activeTurn ? `${tableCss.turnLabel} ${tableCss.turnLabelActive}` : tableCss.turnLabel} aria-label={`Turn ${record.turn}`}><span className={tableCss.turnLabelFull}>Turn {record.turn}</span><span className={tableCss.turnLabelCompact}>T{record.turn}</span></span>}
+      {record.turn === activeTurn && <span className={tableCss.turnRail} aria-hidden="true" />}
       {selected && <span className={tableCss.selectionRail} aria-hidden="true" />}
       <div className={tableCss.eventInner}>
         <span className={tableCss.kindSlot}><span className={`${tableCss.kindTag} ${kindClass[cell.kind]}`} data-role-kind={cell.kind}><span className={tableCss.kindTagIcon} aria-hidden="true">{cell.kind === 'user' ? 'U' : cell.kind === 'message' ? 'A' : cell.kind === 'tool' ? 'T' : 'C'}</span><span className={tableCss.kindTagLabel}>{label}</span></span></span>
@@ -131,18 +131,21 @@ function Cell({ record, selected, onSelect, query }) {
 function Detail({ cell, onClose }) {
   const [tab, setTab] = useState('overview')
   const content = cell.outputDetail || cell.inputDetail || ''
+  const markdown = (value, className = tableCss.markdownPreview) => <div className={className}><ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown></div>
+  const section = (title, children, className = '') => <section className={`${tableCss.overviewSection} ${className}`.trim()}><h3 className={tableCss.overviewHeading}>{title}</h3><div className={tableCss.overviewPreview}>{children}</div></section>
   return <aside className={tableCss.details} aria-label="Record details">
     <div className={tableCss.detailsHeader}><div className={tableCss.detailsTitle}><span className={`${tableCss.kindTag} ${kindClass[cell.kind]}`}>{kindLabel[cell.kind]}</span><span className={tableCss.detailsLocation}>{cell.text}</span></div><button className={tableCss.close} type="button" aria-label="Close details" title="Close details" onClick={onClose}><X size={14} /></button></div>
     <div className={tableCss.detailTabs} role="tablist" aria-label="Record detail tabs"><button className={tab === 'overview' ? `${tableCss.detailTab} ${tableCss.detailTabActive}` : tableCss.detailTab} type="button" role="tab" aria-selected={tab === 'overview'} onClick={() => setTab('overview')}>Overview</button><button className={tab === 'raw' ? `${tableCss.detailTab} ${tableCss.detailTabActive}` : tableCss.detailTab} type="button" role="tab" aria-selected={tab === 'raw'} onClick={() => setTab('raw')}>Raw JSON</button></div>
     <div className={tab === 'overview' ? `${tableCss.detailBody} ${tableCss.detailBodySummary}` : tableCss.detailBody} role="tabpanel">
-      {tab === 'raw' ? <pre className={tableCss.jsonPayload}>{JSON.stringify(cell.raw, null, 2)}</pre> : <>
+      {tab === 'raw' ? <div className={tableCss.overviewPreview}><pre className={`${tableCss.jsonPayload} ${cell.isError ? tableCss.errorPayload : ''}`.trim()}>{JSON.stringify(cell.raw, null, 2)}</pre></div> : <>
         <dl className={tableCss.overview}><div><dt>Record</dt><dd>{cell.recordId || '—'}</dd></div><div><dt>Time</dt><dd>{formatTime(cell.startedAt)}</dd></div><div><dt>Duration</dt><dd>{formatDuration(cell.timeSeconds)}</dd></div>{cell.callId && <div><dt>Call ID</dt><dd>{cell.callId}</dd></div>}{cell.toolName && <div><dt>Tool</dt><dd>{cell.toolName}</dd></div>}</dl>
+        {cell.kind === 'compacted' && content && <div className={tableCss.compactedSummary}><div className={tableCss.overviewPreview}>{markdown(content)}</div></div>}
         <div className={tableCss.overviewSections}>
-          {cell.thinkingDetail && <section className={tableCss.overviewSection}><h3 className={tableCss.overviewHeading}>Thinking</h3><div className={tableCss.markdownPayload}><ReactMarkdown remarkPlugins={[remarkGfm]}>{cell.thinkingDetail}</ReactMarkdown></div></section>}
-          {content && <section className={tableCss.overviewSection}><h3 className={tableCss.overviewHeading}>{cell.kind === 'user' ? 'Input' : 'Output'}</h3><div className={tableCss.markdownPayload}><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></div></section>}
-          {cell.inputDetail && cell.kind === 'tool' && <section className={tableCss.overviewSection}><h3 className={tableCss.overviewHeading}>Arguments</h3><pre className={tableCss.jsonPayload}>{cell.inputDetail}</pre></section>}
-          {cell.outputBlocks?.length > 0 && <section className={tableCss.overviewSection}><h3 className={tableCss.overviewHeading}>Result blocks</h3>{cell.outputBlocks.map((block, index) => <pre className={tableCss.resultBlockText} key={index}>{block.content}</pre>)}</section>}
-          {(cell.input || cell.output || cell.think) && <section className={tableCss.usagePanel}><section className={tableCss.usageGroup}><h4 className={tableCss.usageHeading}>Usage</h4><dl className={tableCss.overview}><div><dt>Input</dt><dd>{cell.input ?? '—'}</dd></div><div><dt>Output</dt><dd>{cell.output ?? '—'}</dd></div><div><dt>Reasoning</dt><dd>{cell.think ?? '—'}</dd></div></dl></section></section>}
+          {cell.kind !== 'compacted' && cell.thinkingDetail && section('Thinking', markdown(cell.thinkingDetail))}
+          {cell.kind !== 'compacted' && content && section(cell.kind === 'user' ? 'Input' : 'Output', markdown(content))}
+          {cell.inputDetail && cell.kind === 'tool' && section('Arguments', <pre className={tableCss.jsonPayload}>{cell.inputDetail}</pre>)}
+          {cell.outputBlocks?.length > 0 && section('Result blocks', <div className={`${tableCss.resultBlocks} ${cell.isError ? tableCss.errorPayload : ''}`.trim()}>{cell.outputBlocks.map((block, index) => <pre className={tableCss.resultBlockText} key={index}>{block.content}</pre>)}</div>)}
+          {(cell.input || cell.output || cell.think) && section('Usage', <div className={tableCss.usagePanel}><section className={tableCss.usageGroup}><h4 className={tableCss.usageHeading}>Usage</h4><dl className={tableCss.overview}><div><dt>Input</dt><dd>{cell.input ?? '—'}</dd></div><div><dt>Output</dt><dd>{cell.output ?? '—'}</dd></div><div><dt>Reasoning</dt><dd>{cell.think ?? '—'}</dd></div></dl></section></div>)}
         </div>
       </>}
     </div>
@@ -152,7 +155,9 @@ function Detail({ cell, onClose }) {
 export function TrajectoryTable({ turns, selectedId, onSelect, callsExpanded, collapsedTurns, query, onToggleTurn, onToggleCalls }) {
   const records = useMemo(() => flattenTurns(turns), [turns])
   const displayRecords = query.trim() ? records.filter(({ cell }) => matchesSearch(cell, query)) : records
-  const selected = records.find((record) => record.cell.recordId === selectedId)?.cell
+  const selectedRecord = records.find((record) => record.cell.recordId === selectedId)
+  const selected = selectedRecord?.cell
+  const activeTurn = selectedRecord?.turn
   return <div className={tableCss.split}>
     <div className={tableCss.tablePane}>
       <table className={tableCss.table} data-scroll-ready="true" aria-rowcount={displayRecords.length}><colgroup><col className={tableCss.eventColumn} /><col className={tableCss.contentColumn} /></colgroup><tbody>
@@ -165,13 +170,13 @@ export function TrajectoryTable({ turns, selectedId, onSelect, callsExpanded, co
             groupedRecords.at(-1).push(record)
           }
           if (turnRecords.length === 0) return null
-          if (collapsedTurns.has(turn.turn)) return <React.Fragment key={`collapsed-${turn.turn}`}><Cell record={{ ...turnRecords[0], turnStart: true }} selected={turnRecords[0].cell.recordId === selectedId} onSelect={onSelect} query={query} /><tr data-collapsed-summary="turn" data-turn-end="true" tabIndex="0" onClick={() => onToggleTurn?.(turn.turn)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggleTurn?.(turn.turn) }}><td className={tableCss.event}><span className={tableCss.turnLabel}>Turn {turn.turn}</span></td><td className={tableCss.content}><span className={tableCss.collapsedTurnContent}><span className={tableCss.collapsedTurnEllipsis}>…</span><span className={tableCss.collapsedTurnText}>{Math.max(0, turnRecords.length - 1)} records collapsed</span></span></td></tr></React.Fragment>
+          if (collapsedTurns.has(turn.turn)) return <React.Fragment key={`collapsed-${turn.turn}`}><Cell record={{ ...turnRecords[0], turnStart: true }} activeTurn={activeTurn} selected={turnRecords[0].cell.recordId === selectedId} onSelect={onSelect} query={query} /><tr data-collapsed-summary="turn" data-turn-end="true" tabIndex="0" onClick={() => onToggleTurn?.(turn.turn)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggleTurn?.(turn.turn) }}><td className={tableCss.event}><span className={tableCss.turnLabel}>Turn {turn.turn}</span></td><td className={tableCss.content}><span className={tableCss.collapsedTurnContent}><span className={tableCss.collapsedTurnEllipsis}>…</span><span className={tableCss.collapsedTurnText}>{Math.max(0, turnRecords.length - 1)} records collapsed</span></span></td></tr></React.Fragment>
           return <React.Fragment key={`turn-${turn.turn}`}>
             {groupedRecords.map((group, groupIndex) => {
               const groupToolCount = group.filter((record) => record.cell.kind === 'tool').length
               return <React.Fragment key={`${turn.turn}-${groupIndex}`}>
-                {group.filter((record) => record.cell.kind !== 'tool' || callsExpanded).map((record) => <Cell key={record.cell.recordId || record.position} record={record} selected={record.cell.recordId === selectedId} onSelect={onSelect} query={query} />)}
-                {!callsExpanded && groupToolCount > 0 && <tr data-collapsed-summary="assistant" tabIndex="0" onClick={onToggleCalls} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggleCalls?.() }}><td className={tableCss.event}><span className={`${tableCss.kindTag} ${tableCss.assistantVioletBright}`}>Assistant</span></td><td className={tableCss.content}><span className={tableCss.collapsedTurnContent}><span className={tableCss.collapsedTurnEllipsis}>…</span><span className={tableCss.collapsedTurnText}>{groupToolCount} tool call{groupToolCount === 1 ? '' : 's'} collapsed</span></span></td></tr>}
+                {group.filter((record) => record.cell.kind !== 'tool' || callsExpanded).map((record) => <Cell key={record.cell.recordId || record.position} record={record} activeTurn={activeTurn} selected={record.cell.recordId === selectedId} onSelect={onSelect} query={query} />)}
+                {!callsExpanded && groupToolCount > 0 && <tr data-collapsed-summary="assistant" tabIndex="0" onClick={onToggleCalls} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggleCalls?.() }}><td className={tableCss.event}><span className={`${tableCss.kindTag} ${tableCss.assistantVioletBright}`}><span className={tableCss.kindTagIcon}>A</span><span className={tableCss.kindTagLabel}>Assistant</span></span></td><td className={tableCss.content}><span className={tableCss.collapsedTurnContent}><span className={tableCss.collapsedTurnEllipsis}>…</span><span className={tableCss.collapsedTurnText}>{groupToolCount} tool call{groupToolCount === 1 ? '' : 's'} collapsed</span></span></td></tr>}
               </React.Fragment>
             })}
           </React.Fragment>
@@ -214,7 +219,7 @@ function App() {
       <div className={`${viewsCss.root} trajectory-shell`}>
         <Toolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={setActualDuration} turnsExpanded={turnsExpanded} onToggleTurns={() => setCollapsedTurns(turnsExpanded ? new Set(turns.map((turn) => turn.turn)) : new Set())} callsExpanded={callsExpanded} setCallsExpanded={setCallsExpanded} />
         <Timeline turns={turns} selectedId={selected?.recordId} onSelect={select} actualDuration={actualDuration} query={query} />
-        <div className={viewsCss.ledger}><TrajectoryTable turns={turns} selectedId={selected?.recordId} onSelect={select} callsExpanded={callsExpanded} onToggleCalls={() => setCallsExpanded(!callsExpanded)} collapsedTurns={collapsedTurns} onToggleTurn={(turn) => setCollapsedTurns((current) => { const next = new Set(current); next.has(turn) ? next.delete(turn) : next.add(turn); return next })} query={query} /></div>
+        <div className={`${viewsCss.ledger} trajectory-ledger`}><TrajectoryTable turns={turns} selectedId={selected?.recordId} onSelect={select} callsExpanded={callsExpanded} onToggleCalls={() => setCallsExpanded(!callsExpanded)} collapsedTurns={collapsedTurns} onToggleTurn={(turn) => setCollapsedTurns((current) => { const next = new Set(current); next.has(turn) ? next.delete(turn) : next.add(turn); return next })} query={query} /></div>
       </div>
     </>}
   </main>

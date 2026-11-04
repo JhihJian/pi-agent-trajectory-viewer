@@ -22,12 +22,10 @@ button { cursor: pointer; }
 .header-actions { display: flex; align-items: center; gap: 10px; color: var(--dsw-alias-label-tertiary); font: var(--dsw-font-xxs-12); white-space: nowrap; }
 .stat { padding-right: 4px; }
 .ledger { height: auto; }
-.trajectory-shell { flex: 1; height: auto !important; min-height: 0; }
+.trajectory-shell { flex: 1; height: auto !important; min-height: 0; --dsh-trajectory-bottom-clearance: 0px; }
+.trajectory-ledger { --dsh-trajectory-bottom-clearance: 0px; }
 .no-results, .empty-detail { display: flex; min-height: 180px; align-items: center; justify-content: center; gap: 8px; color: var(--dsw-alias-label-caption); font: var(--dsw-font-xs-13); }
 .empty-detail { height: 100%; min-height: 0; flex-direction: column; }
-.details .markdownPayload { overflow-wrap: anywhere; }
-.details .markdownPayload pre { max-width: 100%; overflow: auto; }
-.details dd { overflow-wrap: anywhere; }
 .trajectory-shell .timeline-track button {
   appearance: none;
   border: 0;
@@ -39,7 +37,6 @@ button { cursor: pointer; }
 .cell-description { flex: 1; gap: 8px; overflow: hidden; }
 .group-row td { padding: 0 !important; border: 0; }
 tr[data-search-match='false'] { opacity: 0.24; }
-.record-details .markdownPayload, .record-details dd { overflow-wrap: anywhere; }
 @container trajectory-table (max-width: 620px) {
   .cell-content > div:last-child, .metric-columns { width: 160px; gap: 4px; }
   .cell-content > div:last-child > span, .metric-columns > span { width: 37px; overflow: hidden; text-overflow: ellipsis; }
