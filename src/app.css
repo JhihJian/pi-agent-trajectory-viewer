@@ -90,7 +90,17 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .no-results p { max-width: 300px; margin: 0; font-size: 13px; line-height: 1.6; }
 
 /* The host owns these adaptations; reference styles stay unchanged. */
-.record-details { width: clamp(420px, 48%, 780px); }
+.record-details { width: min(var(--details-width, 480px), calc(100% - 240px)); }
+.details-resizer { flex: 0 0 5px; cursor: col-resize; touch-action: none; background: var(--viewer-border); }
+.details-resizer:hover, .details-resizer:focus-visible { background: var(--viewer-accent); }
+.range-clear { border: 0; border-radius: 3px; background: transparent; color: var(--viewer-accent); font: inherit; padding: 4px 6px; }
+.range-clear:hover { background: #e2ebe6; }
+.record-table tr[data-timeline-focus='false'] { opacity: .28; }
+.record-table tr[data-timeline-focus='true'] { background: #eaf3ee; }
+.record-table .virtual-spacer td { padding: 0; border: 0; min-height: 0; }
+.timeline-mode-note { flex: none; padding: 4px 12px; color: var(--dsw-alias-label-secondary); background: #f7f9f8; font-size: 11px; }
+.timeline-tooltip { position: fixed; z-index: 100; max-width: min(250px, calc(100vw - 16px)); padding: 7px 9px; border: 1px solid var(--viewer-border); border-radius: 5px; background: #fff; color: #27332e; font-size: 11px; white-space: pre-line; pointer-events: none; box-shadow: 0 3px 14px #152a201a; }
+.timeline-track [role='button']:focus-visible { outline: 2px solid var(--viewer-accent); outline-offset: 2px; }
 .record-details > :first-child { min-height: 48px; background: #f7f9f8; }
 .record-details .detail-scroll { display: block; overflow-y: auto; padding-bottom: 24px; }
 .detail-scroll > dl { padding: 16px 0; border-bottom: 1px solid var(--viewer-border); background: #fafcfb; }
@@ -168,6 +178,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
   .viewer-toolbar button { min-height: 36px; }
   .viewer-toolbar .search-field { flex-basis: 100%; height: 36px; }
   .record-table td { height: 40px; }
+  .details-resizer { display: none; }
   .viewer-split[data-details-open='true'] .record-list { display: none; }
   .viewer-split .record-details { position: absolute; inset: 0; width: 100%; max-width: 100%; border-left: 0; box-shadow: none; }
   .record-details button { min-height: 36px; min-width: 36px; }

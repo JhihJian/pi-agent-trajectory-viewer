@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { createServer } from 'vite'
 
 test('renders continuous turn rows, search state, calls and timeline boundaries', async () => {
-  const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
+  const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' })
   try {
     const { Detail, Turn, Timeline, Toolbar, TrajectoryTable } = await server.ssrLoadModule('/src/main.jsx')
     const turn = { turn: 1, groups: [
