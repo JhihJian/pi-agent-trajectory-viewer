@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ArrowUpRight, Check, Clock3, Copy, FileJson, FolderOpen, Layers3, ListCollapse, Maximize2, Minimize2, Search, ShieldCheck, WrapText, X } from 'lucide-react'
+import { ArrowUpRight, Check, Clock3, Copy, FileJson, FolderOpen, Maximize2, Minimize2, Search, ShieldCheck, WrapText, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { formatDuration, formatTime, parsePiJsonl } from './parser.js'
+import { allFolded, flattenTurns, foldRecords, foldTargets, projectTimeline, toggleAllFolds, toggleFold } from './trajectory-view.js'
 import tableCss from './reference/TrajectoryTable.module.css'
 import timelineCss from './reference/TrajectoryTimeline.module.css'
 import toolbarCss from './reference/TrajectoryToolbar.module.css'
@@ -21,18 +22,6 @@ const kindClass = {
   message: tableCss.assistantVioletBright,
   tool: tableCss.toolAmber,
   compacted: tableCss.compacted,
-}
-
-function flattenTurns(turns) {
-  let position = 0
-  return turns.flatMap((turn) => turns.length === 0 ? [] : turn.groups.flatMap((group, groupIndex) => group.cells.map((cell, cellIndex) => ({
-    cell,
-    position: ++position,
-    turn: turn.turn,
-    turnStart: groupIndex === 0 && cellIndex === 0,
-    groupStart: cellIndex === 0,
-    turnEnd: groupIndex === turn.groups.length - 1 && cellIndex === group.cells.length - 1,
-  }))))
 }
 
 function matchesSearch(cell, query) {
@@ -81,18 +70,18 @@ function previewText(value, limit = TOOL_PREVIEW_LIMIT) {
   }
 }
 
-function Toolbar({ query, setQuery, actualDuration, setActualDuration, turnsExpanded, onToggleTurns, callsExpanded, setCallsExpanded }) {
+export function Toolbar({ query, setQuery, actualDuration, setActualDuration, allTurnsCollapsed, onToggleTurns, allAssistantsCollapsed, onToggleAssistants }) {
   return <div className={`${toolbarCss.root} viewer-toolbar`} role="toolbar" aria-label="Trajectory toolbar">
     <div className={toolbarCss.inner}>
       <div className={toolbarCss.actions}>
-        <button className={toolbarCss.toggle} type="button" aria-pressed={actualDuration} title="Use recorded duration" onClick={() => setActualDuration(!actualDuration)}>
+        <button className={`${toolbarCss.toggle} duration-toggle`} type="button" aria-label="Use recorded duration" aria-pressed={actualDuration} title={actualDuration ? 'Use equal-width blocks' : 'Use recorded duration'} onClick={() => setActualDuration(!actualDuration)}>
           <Clock3 className={toolbarCss.toggleIcon} size={12} /> Duration
         </button>
-        <button className={toolbarCss.action} type="button" aria-pressed={!turnsExpanded} title={turnsExpanded ? 'Collapse all turns' : 'Expand all turns'} onClick={onToggleTurns}>
-          <Layers3 size={14} aria-hidden="true" /> Turns
+        <button className={toolbarCss.action} type="button" aria-label={allTurnsCollapsed ? 'Expand all turns' : 'Collapse all turns'} aria-pressed={allTurnsCollapsed} title={allTurnsCollapsed ? 'Expand all turns' : 'Collapse all turns'} onClick={onToggleTurns}>
+          <span className={toolbarCss.actionIcon} aria-hidden="true">{allTurnsCollapsed ? '⊞' : '⊟'}</span> Turns
         </button>
-        <button className={toolbarCss.action} type="button" aria-pressed={!callsExpanded} title={callsExpanded ? 'Collapse tool calls' : 'Expand tool calls'} onClick={() => setCallsExpanded(!callsExpanded)}>
-          <ListCollapse size={14} aria-hidden="true" /> Calls
+        <button className={toolbarCss.action} type="button" aria-label={allAssistantsCollapsed ? 'Expand all tool calls' : 'Collapse all tool calls'} aria-pressed={allAssistantsCollapsed} title={allAssistantsCollapsed ? 'Expand all tool calls' : 'Collapse all tool calls'} onClick={onToggleAssistants}>
+          <span className={toolbarCss.actionIcon} aria-hidden="true">{allAssistantsCollapsed ? '⊞' : '⊟'}</span> Calls
         </button>
       </div>
       <div className={`${toolbarCss.search} search-field`}>
@@ -106,22 +95,7 @@ function Toolbar({ query, setQuery, actualDuration, setActualDuration, turnsExpa
 
 export function Timeline({ turns, selectedId, onSelect, actualDuration, query }) {
   const records = useMemo(() => flattenTurns(turns), [turns])
-  const timed = actualDuration
-    ? records.filter(({ cell }) => Number.isFinite(cell.startedAt))
-    : records.map((record, index) => ({ ...record, cell: { ...record.cell, startedAt: index, timeSeconds: 1 } }))
-  let removedIdle = 0
-  let coveredUntil = null
-  const projectedRanges = new Map()
-  for (const record of [...timed].sort((left, right) => left.cell.startedAt - right.cell.startedAt)) {
-    const range = { start: record.cell.startedAt, end: record.cell.startedAt + Math.max(0, (record.cell.timeSeconds ?? 0) * 1000) }
-    if (coveredUntil !== null && range.start > coveredUntil) removedIdle += range.start - coveredUntil
-    coveredUntil = coveredUntil === null ? range.end : Math.max(coveredUntil, range.end)
-    projectedRanges.set(record, { start: range.start - removedIdle, end: range.end - removedIdle })
-  }
-  const projected = timed.map((record) => {
-    const range = projectedRanges.get(record)
-    return { ...record, start: range.start, end: actualDuration ? range.end : range.start + 1 }
-  })
+  const projected = useMemo(() => projectTimeline(records, actualDuration), [records, actualDuration])
   const start = projected.reduce((minimum, { start: value }) => Math.min(minimum, value), projected.length ? Infinity : 0)
   const end = projected.reduce((maximum, { end: value }) => Math.max(maximum, value), start + 1)
   const total = end - start
@@ -139,10 +113,10 @@ export function Timeline({ turns, selectedId, onSelect, actualDuration, query })
           <div className={timelineCss.lanes} style={{ '--trajectory-domain-left': '0%', '--trajectory-domain-width': '100%' }}>
             {projected.map(({ cell, start: spanStart, end: spanEnd }, index) => {
               const left = ((spanStart - start) / total) * 100
-              const duration = Math.max(0.8, ((spanEnd - spanStart) / total) * 100)
+              const duration = ((spanEnd - spanStart) / total) * 100
               const lane = cell.kind === 'tool' ? 2 : cell.kind === 'message' || cell.kind === 'compacted' ? 1 : 0
               const selected = selectedId != null && selectedId === cell.recordId
-              return <button key={cell.recordId || `${cell.kind}-${index}`} className={timelineCss.span} data-timeline-span={cell.kind === 'compacted' ? 'context' : cell.kind} data-search-match={matchesSearch(cell, query) ? 'true' : 'false'} data-selected={selectedId == null ? undefined : selected ? 'true' : 'false'} data-current={selected ? 'true' : undefined} data-error={cell.isError ? 'true' : undefined} data-equal-duration={undefined} aria-label={`${kindLabel[cell.kind]} ${cell.text}`} onClick={() => onSelect(cell)} style={{ '--trajectory-span-left': `${left}%`, '--trajectory-span-width': `${duration}%`, '--trajectory-span-lane': lane, '--trajectory-span-gap': '1px' }} />
+              return <button key={cell.recordId || `${cell.kind}-${index}`} className={timelineCss.span} data-timeline-span={cell.kind === 'compacted' ? 'context' : cell.kind} data-search-match={matchesSearch(cell, query) ? 'true' : 'false'} data-selected={selectedId == null ? undefined : selected ? 'true' : 'false'} data-current={selected ? 'true' : undefined} data-error={cell.isError ? 'true' : undefined} data-timeline-record-id={cell.recordId} aria-label={`${kindLabel[cell.kind]} ${cell.text}`} onClick={() => onSelect(cell)} style={{ '--trajectory-span-left': `${left}%`, '--trajectory-span-width': `${duration}%`, '--trajectory-span-lane': lane, '--trajectory-span-gap': `min(${duration * 0.08}%, 1px)` }} />
             })}
           </div>
         </>}
@@ -151,11 +125,11 @@ export function Timeline({ turns, selectedId, onSelect, actualDuration, query })
   </section>
 }
 
-function Cell({ record, selected, onSelect, query, activeTurn }) {
-  const { cell, position, turnStart, turnEnd, groupStart } = record
+function Cell({ record, selected, onSelect, onToggle, query, activeTurn }) {
+  const { cell, turnStart, turnEnd, groupStart } = record
   const label = kindLabel[cell.kind] || cell.kind
   const searchMatch = matchesSearch(cell, query)
-  return <tr tabIndex="0" aria-rowindex={position} aria-label={`${label}: ${cell.text}`} aria-selected={selected || undefined} data-kind={cell.kind} data-record-index={cell.index} data-group-start={groupStart || undefined} data-turn-start={turnStart || undefined} data-turn-end={turnEnd || undefined} data-search-match={searchMatch ? 'true' : 'false'} data-selected={selected ? 'true' : undefined} data-error={cell.isError ? 'true' : undefined} onClick={() => onSelect(cell)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(cell) } }}>
+  return <tr tabIndex="0" aria-label={`${label}: ${cell.text}`} aria-selected={selected || undefined} data-kind={cell.kind} data-record-id={cell.recordId} data-record-index={cell.index} data-group-start={groupStart || undefined} data-turn-start={turnStart || undefined} data-turn-end={turnEnd || undefined} data-search-match={searchMatch ? 'true' : 'false'} data-selected={selected ? 'true' : undefined} data-error={cell.isError ? 'true' : undefined} onClick={() => onSelect(cell)} onDoubleClick={onToggle} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(cell) } }}>
     <td className={tableCss.event}>
       {turnStart && <span className={record.turn === activeTurn ? `${tableCss.turnLabel} ${tableCss.turnLabelActive}` : tableCss.turnLabel} aria-label={`Turn ${record.turn}`}><span className={tableCss.turnLabelFull}>Turn {record.turn}</span><span className={tableCss.turnLabelCompact}>T{record.turn}</span></span>}
       {record.turn === activeTurn && <span className={tableCss.turnRail} aria-hidden="true" />}
@@ -237,36 +211,34 @@ export function Detail({ cell, onClose }) {
   </aside>
 }
 
-export function TrajectoryTable({ turns, selectedId, onSelect, callsExpanded, collapsedTurns, query, onToggleTurn, onToggleCalls }) {
+export function TrajectoryTable({ turns, selectedId, onSelect, collapsedAssistants = new Set(), collapsedTurns = new Set(), query, onToggleTurn, onToggleAssistant }) {
   const records = useMemo(() => flattenTurns(turns), [turns])
+  const listRef = useRef(null)
+  useEffect(() => {
+    const row = [...(listRef.current?.querySelectorAll('[data-record-id]') ?? [])].find((row) => row.dataset.recordId === selectedId)
+    row?.scrollIntoView({ block: 'nearest' })
+  }, [selectedId, collapsedTurns, collapsedAssistants])
   const searching = Boolean(query.trim())
   const displayRecords = searching ? records.filter(({ cell }) => matchesSearch(cell, query)) : records
   const selectedRecord = records.find((record) => record.cell.recordId === selectedId)
   const selected = selectedRecord && (!searching || matchesSearch(selectedRecord.cell, query)) ? selectedRecord.cell : null
   const activeTurn = selectedRecord?.turn
+  const visibleRecords = searching ? displayRecords : foldRecords(records, collapsedTurns, collapsedAssistants)
+  const targets = foldTargets(records)
+  const toggleRecord = (record) => {
+    if (record.summaryKind === 'turn' || collapsedTurns.has(record.turn)) onToggleTurn?.(record.turn)
+    else if (record.assistantId && targets.assistants.includes(record.assistantId) && record.cell.kind === 'message') onToggleAssistant?.(record.assistantId)
+    else if (record.turnStart && targets.turns.includes(record.turn)) onToggleTurn?.(record.turn)
+  }
   return <div className={`${tableCss.split} viewer-split`} data-details-open={Boolean(selected)}>
-    <div className={`${tableCss.tablePane} record-list`}>
+    <div ref={listRef} className={`${tableCss.tablePane} record-list`}>
       <div className="ledger-heading"><span>Session records</span><span role="status">{displayRecords.length} {searching ? 'matches' : 'records'}</span></div>
       {displayRecords.length === 0 && <div className="no-results"><Search size={24} strokeWidth={1.5} /><h2>{searching ? 'No matching records' : 'No records in this session'}</h2><p>{searching ? 'Try another keyword or clear the search field.' : 'Open a session containing messages to explore its trajectory.'}</p></div>}
-      <table className={`${tableCss.table} record-table`} data-scroll-ready="true" aria-rowcount={displayRecords.length}><colgroup><col className={tableCss.eventColumn} /><col className={tableCss.contentColumn} /></colgroup><tbody>
-        {turns.map((turn) => {
-          const turnRecords = displayRecords.filter((record) => record.turn === turn.turn).map((record, index) => query.trim() && index === 0 ? { ...record, turnStart: true } : record)
-          const groupedRecords = []
-          for (const record of turnRecords) {
-            if (record.groupStart || groupedRecords.length === 0) groupedRecords.push([])
-            groupedRecords.at(-1).push(record)
-          }
-          if (turnRecords.length === 0) return null
-          if (!searching && collapsedTurns.has(turn.turn)) return <React.Fragment key={`collapsed-${turn.turn}`}><Cell record={{ ...turnRecords[0], turnStart: true }} activeTurn={activeTurn} selected={turnRecords[0].cell.recordId === selectedId} onSelect={onSelect} query={query} /><tr data-collapsed-summary="turn" data-turn-end="true" tabIndex="0" onClick={() => onToggleTurn?.(turn.turn)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggleTurn?.(turn.turn) }}><td className={tableCss.event}><span className={tableCss.turnLabel}>Turn {turn.turn}</span></td><td className={tableCss.content}><span className={tableCss.collapsedTurnContent}><span className={tableCss.collapsedTurnEllipsis}>…</span><span className={tableCss.collapsedTurnText}>{Math.max(0, turnRecords.length - 1)} records collapsed</span></span></td></tr></React.Fragment>
-          return <React.Fragment key={`turn-${turn.turn}`}>
-            {groupedRecords.map((group, groupIndex) => {
-              const groupToolCount = group.filter((record) => record.cell.kind === 'tool').length
-              return <React.Fragment key={`${turn.turn}-${groupIndex}`}>
-                {group.filter((record) => record.cell.kind !== 'tool' || callsExpanded || searching).map((record) => <Cell key={record.cell.recordId || record.position} record={record} activeTurn={activeTurn} selected={record.cell.recordId === selectedId} onSelect={onSelect} query={query} />)}
-                {!searching && !callsExpanded && groupToolCount > 0 && <tr data-collapsed-summary="assistant" tabIndex="0" onClick={onToggleCalls} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggleCalls?.() }}><td className={tableCss.event}><span className={`${tableCss.kindTag} ${tableCss.assistantVioletBright}`}><span className={tableCss.kindTagIcon}>A</span><span className={tableCss.kindTagLabel}>Assistant</span></span></td><td className={tableCss.content}><span className={tableCss.collapsedTurnContent}><span className={tableCss.collapsedTurnEllipsis}>…</span><span className={tableCss.collapsedTurnText}>{groupToolCount} tool call{groupToolCount === 1 ? '' : 's'} collapsed</span></span></td></tr>}
-              </React.Fragment>
-            })}
-          </React.Fragment>
+      <table className={`${tableCss.table} record-table`} data-scroll-ready="true"><colgroup><col className={tableCss.eventColumn} /><col className={tableCss.contentColumn} /></colgroup><tbody>
+        {visibleRecords.map((record, index) => {
+          if (record.summaryKind) return <tr key={`${record.position}-${record.summaryKind}`} data-collapsed-summary={record.summaryKind} data-turn-end={record.turnEnd || undefined} tabIndex="0" aria-label={`Expand ${record.summaryKind === 'turn' ? `turn ${record.turn}` : 'tool calls'}: ${record.summary}`} onClick={() => toggleRecord(record)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleRecord(record) } }}><td className={tableCss.event} /><td className={tableCss.content}><span className={tableCss.collapsedTurnContent} title={record.summary}><span className={tableCss.collapsedTurnEllipsis}>…</span><span className={tableCss.collapsedTurnText}>{record.summary}</span></span></td></tr>
+          const visibleRecord = searching ? { ...record, turnStart: visibleRecords[index - 1]?.turn !== record.turn, turnEnd: visibleRecords[index + 1]?.turn !== record.turn } : record
+          return <Cell key={record.cell.recordId || record.position} record={visibleRecord} activeTurn={activeTurn} selected={record.cell.recordId === selectedId} onSelect={onSelect} onToggle={() => toggleRecord(record)} query={query} />
         })}
       </tbody></table>
     </div>
@@ -285,9 +257,9 @@ function App() {
   const [fileName, setFileName] = useState('')
   const [selected, setSelected] = useState(null)
   const [query, setQuery] = useState('')
-  const [actualDuration, setActualDuration] = useState(true)
+  const [actualDuration, setActualDuration] = useState(false)
   const [collapsedTurns, setCollapsedTurns] = useState(new Set())
-  const [callsExpanded, setCallsExpanded] = useState(false)
+  const [collapsedAssistants, setCollapsedAssistants] = useState(new Set())
   const [dragging, setDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const openFile = () => inputRef.current?.click()
@@ -297,13 +269,25 @@ function App() {
     setDragging(false)
     try {
       const next = parsePiJsonl(await file.text())
-      setData(next); setFileName(file.name); setError(''); setSelected(null); setQuery(''); setCollapsedTurns(new Set()); setCallsExpanded(false)
+      setData(next); setFileName(file.name); setError(''); setSelected(null); setQuery(''); setCollapsedTurns(new Set()); setCollapsedAssistants(new Set())
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); setData(null) }
     finally { setLoading(false); if (inputRef.current) inputRef.current.value = '' }
   }
   const turns = data?.turns ?? []
-  const turnsExpanded = collapsedTurns.size === 0
+  const records = useMemo(() => flattenTurns(data?.turns ?? []), [data])
+  const targets = useMemo(() => foldTargets(records), [records])
+  const allTurnsCollapsed = allFolded(targets.turns, collapsedTurns)
+  const allAssistantsCollapsed = allFolded(targets.assistants, collapsedAssistants)
   const select = (cell) => setSelected(cell?.recordId ? cell : null)
+  const selectTimeline = (cell) => {
+    const record = records.find((record) => record.cell === cell)
+    if (record) {
+      setCollapsedTurns((current) => { const next = new Set(current); next.delete(record.turn); return next })
+      setCollapsedAssistants((current) => { const next = new Set(current); next.delete(record.assistantId); return next })
+      if (!matchesSearch(cell, query)) setQuery('')
+    }
+    select(cell)
+  }
   return <main className="app-shell">
     <input ref={inputRef} className="file-input" type="file" accept=".jsonl,application/jsonl,application/json" onChange={(event) => handleFile(event.target.files?.[0])} />
     {!data ? <>
@@ -319,9 +303,9 @@ function App() {
     </> : <>
       <header className="session-header"><span className="brand-mark" aria-hidden="true">π</span><div className="session-title"><span className="eyebrow">PI AGENT / SESSION</span><h1 title={fileName}>{fileName}</h1><p title={data.header.cwd}>{data.header.cwd || 'Working directory unavailable'} <span>·</span> {data.header.modelId || data.header.provider || 'Recorded session'}</p></div><div className="header-actions"><span className="stat"><strong>{data.stats.turns}</strong> turns</span><span className="stat"><strong>{data.stats.tools}</strong> tools</span><button type="button" className="header-button" disabled={loading} onClick={openFile}><FolderOpen size={14} /> {loading ? 'Reading…' : 'Open another'}</button></div></header>
       <div className={`${viewsCss.root} trajectory-shell`}>
-        <Toolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={setActualDuration} turnsExpanded={turnsExpanded} onToggleTurns={() => setCollapsedTurns(turnsExpanded ? new Set(turns.map((turn) => turn.turn)) : new Set())} callsExpanded={callsExpanded} setCallsExpanded={setCallsExpanded} />
-        <Timeline turns={turns} selectedId={selected?.recordId} onSelect={select} actualDuration={actualDuration} query={query} />
-        <div className={`${viewsCss.ledger} trajectory-ledger`}><TrajectoryTable turns={turns} selectedId={selected?.recordId} onSelect={select} callsExpanded={callsExpanded} onToggleCalls={() => setCallsExpanded(!callsExpanded)} collapsedTurns={collapsedTurns} onToggleTurn={(turn) => setCollapsedTurns((current) => { const next = new Set(current); next.has(turn) ? next.delete(turn) : next.add(turn); return next })} query={query} /></div>
+        <Toolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={setActualDuration} allTurnsCollapsed={allTurnsCollapsed} onToggleTurns={() => setCollapsedTurns((current) => toggleAllFolds(current, targets.turns))} allAssistantsCollapsed={allAssistantsCollapsed} onToggleAssistants={() => setCollapsedAssistants((current) => toggleAllFolds(current, targets.assistants))} />
+        <Timeline turns={turns} selectedId={selected?.recordId} onSelect={selectTimeline} actualDuration={actualDuration} query={query} />
+        <div className={`${viewsCss.ledger} trajectory-ledger`}><TrajectoryTable turns={turns} selectedId={selected?.recordId} onSelect={select} collapsedAssistants={collapsedAssistants} onToggleAssistant={(id) => setCollapsedAssistants((current) => toggleFold(current, id))} collapsedTurns={collapsedTurns} onToggleTurn={(turn) => setCollapsedTurns((current) => toggleFold(current, turn))} query={query} /></div>
       </div>
     </>}
   </main>
