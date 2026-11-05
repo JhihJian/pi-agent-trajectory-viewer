@@ -3,6 +3,8 @@
 :root {
   color-scheme: light;
   --viewer-accent: #256b5b;
+  --viewer-control-active-bg: #e7f1ec;
+  --viewer-control-active-border: #bfd4c9;
   --viewer-surface: #f5f7f6;
   --viewer-border: #dfe5e2;
   --dsw-font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -69,7 +71,8 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .viewer-toolbar { flex: none; }
 .viewer-toolbar > div { padding: 0 12px; }
 .viewer-toolbar button { min-height: 32px; padding: 0 10px; gap: 6px; color: var(--dsw-alias-label-secondary); }
-.viewer-toolbar .duration-toggle[aria-pressed='true'] { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-interactive-bg-hover); }
+.trajectory-controls button[aria-pressed='true'] { color: var(--viewer-accent); background: var(--viewer-control-active-bg); box-shadow: inset 0 0 0 1px var(--viewer-control-active-border); }
+.trajectory-controls button[aria-pressed='true'] > span { color: inherit; }
 .viewer-toolbar .search-field { flex-basis: 260px; height: 32px; padding: 0 9px; gap: 7px; border: 1px solid var(--viewer-border); border-radius: 6px; background: var(--viewer-surface); }
 .search-field input { min-width: 0; font-size: 12px; }
 .search-field input::-webkit-search-cancel-button { display: none; }

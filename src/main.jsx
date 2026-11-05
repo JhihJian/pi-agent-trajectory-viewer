@@ -73,7 +73,7 @@ function previewText(value, limit = TOOL_PREVIEW_LIMIT) {
 export function Toolbar({ query, setQuery, actualDuration, setActualDuration, allTurnsCollapsed, onToggleTurns, allAssistantsCollapsed, onToggleAssistants }) {
   return <div className={`${toolbarCss.root} viewer-toolbar`} role="toolbar" aria-label="Trajectory toolbar">
     <div className={toolbarCss.inner}>
-      <div className={toolbarCss.actions}>
+      <div className={`${toolbarCss.actions} trajectory-controls`}>
         <button className={`${toolbarCss.toggle} duration-toggle`} type="button" aria-label="Use recorded duration" aria-pressed={actualDuration} title={actualDuration ? 'Use equal-width blocks' : 'Use recorded duration'} onClick={() => setActualDuration(!actualDuration)}>
           <Clock3 className={toolbarCss.toggleIcon} size={12} /> Duration
         </button>
