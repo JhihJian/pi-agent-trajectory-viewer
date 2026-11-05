@@ -43,6 +43,14 @@ export function toggleAllFolds(current, ids) {
   return next
 }
 
+// Calls acts on a nested level, so reveal its parent turns with the same update.
+export function toggleCallGroups(collapsedAssistants, assistantIds) {
+  return {
+    collapsedTurns: new Set(),
+    collapsedAssistants: toggleAllFolds(collapsedAssistants, assistantIds),
+  }
+}
+
 const countLabel = (count, name) => `${count} ${name}${count === 1 ? '' : 's'}`
 
 export function foldRecords(records, collapsedTurns, collapsedAssistants) {

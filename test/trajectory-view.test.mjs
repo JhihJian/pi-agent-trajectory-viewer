@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { allFolded, flattenTurns, foldRecords, foldTargets, projectTimeline, toggleAllFolds, toggleFold } from '../src/trajectory-view.js'
+import { allFolded, flattenTurns, foldRecords, foldTargets, projectTimeline, toggleAllFolds, toggleCallGroups, toggleFold } from '../src/trajectory-view.js'
 
 const turns = [
   { turn: 1, groups: [
@@ -61,6 +61,31 @@ test('call summaries preserve their assistant and expand independently', () => {
   const partial = foldRecords(records, new Set(), new Set(['a2']))
   assert.deepEqual(partial.filter(record => record.cell.kind === 'tool').map(record => record.cell.recordId), ['t1', 't2'])
   assert.equal(partial.find(record => record.summaryKind).assistantId, 'a2')
+})
+
+test('Turns then Calls reveals call groups and updates both toolbar states', () => {
+  const targets = foldTargets(records)
+  const turnsFolded = toggleAllFolds(new Set(), targets.turns)
+  assert.equal(foldRecords(records, turnsFolded, new Set()).filter(record => record.summaryKind === 'turn').length, 2)
+
+  const grouped = toggleCallGroups(new Set(), targets.assistants)
+  const visible = foldRecords(records, grouped.collapsedTurns, grouped.collapsedAssistants)
+  assert.equal(visible.some(record => record.summaryKind === 'turn'), false)
+  assert.equal(visible.filter(record => record.summaryKind === 'assistant').length, 2)
+  assert.equal(visible.some(record => record.cell.kind === 'tool'), false)
+  assert.equal(allFolded(targets.turns, grouped.collapsedTurns), false)
+  assert.equal(allFolded(targets.assistants, grouped.collapsedAssistants), true)
+
+  // Fold Turns again while Calls is folded, then expand Calls in one action.
+  assert.equal(foldRecords(records, turnsFolded, grouped.collapsedAssistants).filter(record => record.summaryKind === 'turn').length, 2)
+  const expanded = toggleCallGroups(grouped.collapsedAssistants, targets.assistants)
+  assert.deepEqual(foldRecords(records, expanded.collapsedTurns, expanded.collapsedAssistants), records)
+
+  // A partially expanded Calls state still collapses every group and reveals them.
+  const partial = toggleFold(grouped.collapsedAssistants, 'a1')
+  const regrouped = toggleCallGroups(partial, targets.assistants)
+  assert.equal(allFolded(targets.assistants, regrouped.collapsedAssistants), true)
+  assert.equal(regrouped.collapsedTurns.size, 0)
 })
 
 test('turn folding takes precedence without discarding call fold state or adding empty summaries', () => {

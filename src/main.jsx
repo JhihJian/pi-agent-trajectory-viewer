@@ -4,7 +4,7 @@ import { ArrowUpRight, Check, Clock3, Copy, FileJson, FolderOpen, Maximize2, Min
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { formatDuration, formatTime, parsePiJsonl } from './parser.js'
-import { allFolded, flattenTurns, foldRecords, foldTargets, projectTimeline, toggleAllFolds, toggleFold } from './trajectory-view.js'
+import { allFolded, flattenTurns, foldRecords, foldTargets, projectTimeline, toggleAllFolds, toggleCallGroups, toggleFold } from './trajectory-view.js'
 import tableCss from './reference/TrajectoryTable.module.css'
 import timelineCss from './reference/TrajectoryTimeline.module.css'
 import toolbarCss from './reference/TrajectoryToolbar.module.css'
@@ -278,6 +278,11 @@ function App() {
   const targets = useMemo(() => foldTargets(records), [records])
   const allTurnsCollapsed = allFolded(targets.turns, collapsedTurns)
   const allAssistantsCollapsed = allFolded(targets.assistants, collapsedAssistants)
+  const toggleCalls = () => {
+    const next = toggleCallGroups(collapsedAssistants, targets.assistants)
+    setCollapsedTurns(next.collapsedTurns)
+    setCollapsedAssistants(next.collapsedAssistants)
+  }
   const select = (cell) => setSelected(cell?.recordId ? cell : null)
   const selectTimeline = (cell) => {
     const record = records.find((record) => record.cell === cell)
@@ -303,7 +308,7 @@ function App() {
     </> : <>
       <header className="session-header"><span className="brand-mark" aria-hidden="true">π</span><div className="session-title"><span className="eyebrow">PI AGENT / SESSION</span><h1 title={fileName}>{fileName}</h1><p title={data.header.cwd}>{data.header.cwd || 'Working directory unavailable'} <span>·</span> {data.header.modelId || data.header.provider || 'Recorded session'}</p></div><div className="header-actions"><span className="stat"><strong>{data.stats.turns}</strong> turns</span><span className="stat"><strong>{data.stats.tools}</strong> tools</span><button type="button" className="header-button" disabled={loading} onClick={openFile}><FolderOpen size={14} /> {loading ? 'Reading…' : 'Open another'}</button></div></header>
       <div className={`${viewsCss.root} trajectory-shell`}>
-        <Toolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={setActualDuration} allTurnsCollapsed={allTurnsCollapsed} onToggleTurns={() => setCollapsedTurns((current) => toggleAllFolds(current, targets.turns))} allAssistantsCollapsed={allAssistantsCollapsed} onToggleAssistants={() => setCollapsedAssistants((current) => toggleAllFolds(current, targets.assistants))} />
+        <Toolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={setActualDuration} allTurnsCollapsed={allTurnsCollapsed} onToggleTurns={() => setCollapsedTurns((current) => toggleAllFolds(current, targets.turns))} allAssistantsCollapsed={allAssistantsCollapsed} onToggleAssistants={toggleCalls} />
         <Timeline turns={turns} selectedId={selected?.recordId} onSelect={selectTimeline} actualDuration={actualDuration} query={query} />
         <div className={`${viewsCss.ledger} trajectory-ledger`}><TrajectoryTable turns={turns} selectedId={selected?.recordId} onSelect={select} collapsedAssistants={collapsedAssistants} onToggleAssistant={(id) => setCollapsedAssistants((current) => toggleFold(current, id))} collapsedTurns={collapsedTurns} onToggleTurn={(turn) => setCollapsedTurns((current) => toggleFold(current, turn))} query={query} /></div>
       </div>
