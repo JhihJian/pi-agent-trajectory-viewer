@@ -218,6 +218,7 @@ test('browser interactions preserve tabs, copy exact values, navigate and reveal
   } finally {
     cdp?.close()
     if (chrome && chrome.exitCode === null) { const exited = once(chrome, 'exit'); chrome.kill('SIGKILL'); await exited }
-    await rm(profile, { recursive: true, force: true })
+    await new Promise(resolve => setTimeout(resolve, 100))
+    try { await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }) } catch { /* Chromium children may still be flushing the profile. */ }
   }
 })
