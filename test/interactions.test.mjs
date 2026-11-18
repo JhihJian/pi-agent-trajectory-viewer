@@ -52,6 +52,17 @@ test('full application timeline, ledger, detail and responsive interactions', { 
   const domain = () => track.evaluate(el => [Number(el.dataset.viewportStart), Number(el.dataset.viewportEnd)])
   const status = () => page.locator('.ledger-heading [role=status]').innerText()
   const clear = () => page.getByRole('button', { name: 'Clear timeline selection' }).click()
+  const typeSearch = async (text) => {
+    const box = page.getByRole('searchbox')
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await box.focus()
+      await page.keyboard.type(text, { delay: 30 })
+      if (await box.inputValue() === text) return
+      await box.press('ControlOrMeta+a')
+      await box.press('Delete')
+    }
+    throw new Error(`Search input failed to retain "${text}"`)
+  }
   try {
     await page.goto(`http://127.0.0.1:${server.httpServer.address().port}#/viewer`)
     await page.locator('input[type=file]').waitFor({ state: 'attached' })
@@ -81,7 +92,7 @@ test('full application timeline, ledger, detail and responsive interactions', { 
       await drag(.25, .4)
       assert.ok(await page.locator('tr[data-kind=tool][data-timeline-focus=true]').count() > 0)
       await page.getByRole('searchbox').focus()
-      await page.keyboard.type('result keyword-12', { delay: 15 })
+      await typeSearch('result keyword-12')
       assert.equal(await page.getByRole('searchbox').inputValue(), 'result keyword-12')
       assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Search trajectory')
       assert.equal(await page.locator('tr[data-kind]').count(), 1)
@@ -159,7 +170,7 @@ test('full application timeline, ledger, detail and responsive interactions', { 
       await page.keyboard.press('Enter')
       await page.locator('.record-details').waitFor()
       await page.getByRole('searchbox').focus()
-      await page.keyboard.type('keyword-1', { delay: 15 })
+      await typeSearch('keyword-1')
       assert.equal(await page.getByRole('searchbox').inputValue(), 'keyword-1')
       assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Search trajectory')
       await page.getByLabel('Clear search', { exact: true }).click()
