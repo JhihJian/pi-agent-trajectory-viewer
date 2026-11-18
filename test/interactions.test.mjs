@@ -53,7 +53,8 @@ test('full application timeline, ledger, detail and responsive interactions', { 
   const status = () => page.locator('.ledger-heading [role=status]').innerText()
   const clear = () => page.getByRole('button', { name: 'Clear timeline selection' }).click()
   try {
-    await page.goto(`http://127.0.0.1:${server.httpServer.address().port}`)
+    await page.goto(`http://127.0.0.1:${server.httpServer.address().port}#/viewer`)
+    await page.locator('input[type=file]').waitFor({ state: 'attached' })
     await load()
     await t.test('forward/reverse range, context dimming, clear and scroll to unmounted records', async () => {
       await drag(.62, .79)

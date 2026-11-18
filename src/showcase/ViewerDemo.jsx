@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react'
 import { ArrowUpRight, Check, FileJson, FolderOpen, ShieldCheck } from 'lucide-react'
-import { parsePiJsonl } from './lib/parser.js'
-import { TrajectoryViewer } from './components/TrajectoryViewer.jsx'
-import './components/styles/index.css'
-import './app.css'
+import { parsePiJsonl } from '../lib/parser.js'
+import { TrajectoryViewer } from '../components/TrajectoryViewer.jsx'
+import '../components/styles/index.css'
+import './viewer-demo.css'
 
 export function ViewerDemo() {
   const inputRef = useRef(null)

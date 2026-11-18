@@ -7,7 +7,7 @@ import { createServer } from 'vite'
 test('renders continuous turn rows, search state, calls and timeline boundaries', async () => {
   const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' })
   try {
-    const { Detail, Turn, Timeline, TrajectoryToolbar: Toolbar, TrajectoryTable, TrajectoryViewer } = await server.ssrLoadModule('/src/components/index.js')
+    const { Detail, Turn, Timeline, TrajectoryToolbar: Toolbar, TrajectoryTable } = await server.ssrLoadModule('/src/components/index.js')
     const turn = { turn: 1, groups: [
       { title: 'User', cells: [{ kind: 'user', recordId: 'u', text: 'hello', startedAt: 1000 }] },
       { title: 'Step 1', cells: [{ kind: 'message', recordId: 'a', text: 'answer', startedAt: 2000 }, { kind: 'tool', recordId: 'c', text: 'read', startedAt: 3000 }] },
