@@ -4,6 +4,8 @@ export { flattenTurns, foldTargets, allFolded, toggleFold, toggleAllFolds, toggl
 export { Timeline } from './Timeline.jsx'
 export { TrajectoryTable, Turn } from './TrajectoryTable.jsx'
 export { TrajectoryTimeline } from './TrajectoryTimeline.jsx'
+export { TrajectoryViewer } from './TrajectoryViewer.jsx'
+export { TrajectoryToolbar } from './TrajectoryToolbar.jsx'
 export { Detail, TextOutput, previewText, detailTabs, tabForKey, contentBlocks, embeddedImageSource, relatedRecords, usageOf, cumulativeUsage } from './Detail.jsx'
 export { JsonTree, CopyButton, copyText, jsonPath } from './JsonTree.jsx'
 export { Tooltip } from './Tooltip.jsx'

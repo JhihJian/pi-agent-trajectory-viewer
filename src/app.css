@@ -1,4 +1,6 @@
-@import './components/styles/index.css';
+/* Host application styles for the viewer demo shell. Component-owned styles
+ * (reference theme, viewer structure) are imported by the components
+ * themselves; this file only covers welcome, header and page layout. */
 
 :root {
   color-scheme: light;
@@ -66,8 +68,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .header-actions { display: flex; flex: none; align-items: center; gap: 18px; color: var(--dsw-alias-label-tertiary); font-size: 12px; white-space: nowrap; }
 .stat { font-variant-numeric: tabular-nums; }
 .stat strong { margin-right: 3px; color: var(--dsw-alias-label-primary); font-weight: 600; }
-.trajectory-shell { flex: 1; width: auto; height: auto; min-height: 0; margin: 18px 24px 24px; border: 1px solid var(--viewer-border); border-radius: 10px; --dsh-trajectory-bottom-clearance: 0px; --dsh-trajectory-toolbar-height: 52px; }
-.trajectory-ledger { --dsh-trajectory-bottom-clearance: 0px; }
+.trajectory-shell { flex: 1; width: auto; height: auto; min-height: 0; margin: 18px 24px 24px; border: 1px solid var(--viewer-border); border-radius: 10px; }
 .viewer-toolbar { flex: none; }
 .viewer-toolbar > div { padding: 0 12px; }
 .viewer-toolbar button { min-height: 32px; padding: 0 10px; gap: 6px; color: var(--dsw-alias-label-secondary); }
