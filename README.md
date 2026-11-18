@@ -1,25 +1,39 @@
-# Pi Agent Trajectory Viewer
+# Pi Trajectory UI
 
-一个只读的微型前端，用于打开并渲染 Pi Agent 保存的 `.jsonl` 会话文件。
+React 组件仓库与 live site，把 Pi Agent 会话变成可读的轨迹：时间线、记录表格、详情面板，以及一个可直接打开 `.jsonl` 文件的完整查看器。
 
-## 功能
+组件自包含样式与逻辑，可在任意 React 18 应用中单独使用；live site 提供每个组件的活体预览、源码浏览和复制。
 
-- 浏览器本地选择或拖拽 Pi Agent session JSONL
-- 按当前 `parentId` 分支展示 User、Assistant、Tool 和 Compacted 轨迹
-- 展示 Assistant thinking、工具参数、工具结果、错误状态和 usage
-- 基于 deepseek harness `ui-trajectory` 的表格、时间线和详情结构，统一浅色中性色与绿色操作强调色
-- 时间线支持正反向框选、滚轮缩放、右键拖动平移及边缘平移，选区联动记录定位和高亮
-- 支持多词搜索、Turn 和工具调用折叠、记录详情和响应式移动端布局
-- 大会话表格按视口渲染，支持跳转到尚未挂载的远端记录
-- 工具记录显示命令、路径或查询目标及结果状态，可通过 Calls 按钮统一折叠
-- 工具参数与 JSON 结果支持树形展开、复制值/路径/JSON；长文本保留换行，默认展示头尾片段，支持原文复制、全文展开和换行切换
-- 搜索时自动显示折叠中的命中记录，展示匹配数量、无结果提示与清空入口
-- 消息与工具分别提供详情标签，支持思考折叠、内嵌图片、Markdown 代码复制、助手与工具双向跳转
-- 桌面详情支持拖动和键盘调整宽度；标签支持方向键，Escape 关闭详情并返回记录
-- 提供文件拖放高亮、读取状态、导入错误提示及本地文件隐私说明
-- Pi 未记录首 token 时间时不推算 assistant 时间指标
+## 仓库结构
 
-文件只在浏览器内解析，不上传到服务端。
+```
+src/
+  components/        组件层（自包含，统一从 index.js 导出）
+    reference/       DeepSeek harness 逐字复制的参考样式，禁止修改
+    styles/          组件层样式（主题聚合 index.css、viewer.module.css、detail.css）
+    TrajectoryViewer.jsx   工作区容器：工具栏 + 时间线 + 表格联动
+    TrajectoryToolbar.jsx  Duration / Turns / Calls 切换与搜索
+    TrajectoryTable.jsx    虚拟化记录表格与详情分栏
+    TrajectoryTimeline.jsx 时间线引擎（框选、缩放、平移）
+    Timeline.jsx           时间线包装（投影与搜索命中）
+    Detail.jsx             记录详情（标签页、Markdown、内嵌图片、usage）
+    JsonTree.jsx           JSON 树与复制按钮
+    Tooltip.jsx            延迟提示
+    index.js               统一导出组件与纯逻辑模块
+  lib/               纯逻辑层（无 React 依赖）
+    parser.js          Pi JSONL 解析
+    timeline.js        时间线投影、选区索引与搜索匹配
+    trajectory-view.js 折叠、展开与等宽/耗时投影
+  showcase/          live site（hash 路由展示站）
+    main.jsx           站点入口
+    Showcase.jsx       站点外壳与路由
+    HomePage.jsx       首页
+    ComponentPreview.jsx / ComponentDemo.jsx  组件活体预览
+    ViewerDemo.jsx     完整查看器演示（文件导入 + TrajectoryViewer）
+    viewer-demo.css    演示外壳样式（欢迎页、会话头部）
+    showcase.css       站点框架样式
+  data/              组件目录（catalog）与演示用样例会话
+```
 
 ## 启动
 
@@ -30,9 +44,45 @@ npm run dev
 
 开发服务监听 `0.0.0.0`。如果默认端口被占用，Vite 会自动选择下一个可用端口。
 
+```bash
+npm run build
+npm run preview
+```
+
+生产构建输出到 `dist/`。
+
+## Live site
+
+- `#/`：概览与精选组件
+- `#/components`：组件列表，支持分类与关键词过滤
+- `#/components/:slug`：组件详情，含活体预览与源码（按需加载、可复制）
+- `#/viewer`：完整查看器演示，拖入或选择 Pi Agent `.jsonl` 会话即可浏览
+
+演示站内置一份样例会话驱动组件预览；查看器中的用户文件只在浏览器内解析，不上传到服务端。
+
+## 使用组件
+
+组件通过 `src/components/index.js` 统一导出。在 Vite 应用中按路径导入即可：
+
+```jsx
+import { TrajectoryViewer, parsePiJsonl } from './src/components/index.js'
+
+const { turns } = parsePiJsonl(sessionText)
+
+<TrajectoryViewer turns={turns} />
+```
+
+导出面：
+
+- 数据与逻辑：`parsePiJsonl`、`flattenTurns`、`foldTargets`、`projectTimeline`、`matchesSearch`、`deriveTrajectoryTimeline` 等
+- 容器组件：`TrajectoryViewer`（传入 `turns` 即可工作，内部接管选中、搜索、折叠与时间线选区编排；可选 `defaultDuration`、`defaultQuery`、`sessionRevision`、`onSelectionChange`）
+- 展示组件：`TrajectoryToolbar`、`Timeline`、`TrajectoryTable`、`Turn`、`TrajectoryTimeline`、`Detail`、`JsonTree`、`CopyButton`、`Tooltip` 等，全部为受控 props
+
+组件层自带主题（`src/components/styles/index.css` 聚合 reference 样式）与结构样式；宿主页面只需提供页面框架。
+
 ## 轨迹切换
 
-工具栏的切换行为对齐 DeepSeek `ui-trajectory`，时间投影与折叠计算集中在 `src/trajectory-view.js`。三个按钮均按 `aria-pressed` 显示持久选中态：浅绿色背景、绿色文字和图标，以及细描边。Duration 开启耗时视图时选中，Turns / Calls 全部折叠时选中，鼠标移开后仍保留高亮。
+工具栏的切换行为对齐 DeepSeek `ui-trajectory`，时间投影与折叠计算集中在 `src/lib/trajectory-view.js`。三个按钮均按 `aria-pressed` 显示持久选中态：浅绿色背景、绿色文字和图标，以及细描边。Duration 开启耗时视图时选中，Turns / Calls 全部折叠时选中，鼠标移开后仍保留高亮。
 
 - **Duration**：首次使用默认关闭，所有记录按顺序等宽显示，之后记住浏览器内的选择。开启后按已有耗时绘制，并压缩操作之间的空闲间隔。没有耗时的记录显示为时间点，没有时间戳的记录不进入耗时视图。总时长为零时明确提示并回退到记录顺序。切换会清除旧选区并恢复完整视窗，详情始终使用原始时间和耗时。
 - **Turns**：默认展开。点击 `⊟` 折叠所有包含多条记录的 Turn，保留首条记录及步骤数、工具调用数摘要。全部折叠后图标变为 `⊞`，再次点击展开全部。只有一条记录的 Turn 保持原样。
@@ -62,7 +112,7 @@ npm run build
 
 ## 样式来源
 
-`src/reference/` 中的轨迹 CSS 和主题变量从 deepseek harness 对应文件逐字复制，具体包括：
+`src/components/reference/` 中的轨迹 CSS 和主题变量从 DeepSeek harness 对应文件逐字复制，具体包括：
 
 - `packages/client/ui-trajectory/src/client/*.module.css`
 - `packages/client/ui-theme/src/styles/base.css`
@@ -75,6 +125,6 @@ npm run build
 
 由于原组件依赖 Cordis、DSH Session 和客户端 primitives，本项目使用独立的 Pi JSONL 适配器提供 `Trajectory` 所需的展示数据。
 
-项目专属视觉调整集中在 `src/app.css`，不修改 `src/reference/` 的来源文件。入口页提供文件导入引导，工作区保留紧凑表格与角色配色，使用统一的文字层级、控件尺寸、键盘焦点和选中反馈。桌面采用记录与详情分栏，760px 以下详情占满记录区，关闭后返回列表。工具输出默认按字符预算显示开头和结尾，完整内容仍保留在内存中并可按需展开或复制。详情正文统一纵向滚动，代码和宽表格在内容区内横向滚动，并尊重系统的减少动态效果设置。
+组件专属视觉调整集中在 `src/components/styles/`（结构）与 `src/showcase/`（演示外壳），不修改 `src/components/reference/` 的来源文件。演示站点提供组件预览与源码浏览，`#/viewer` 保留文件导入引导、工作区紧凑表格与角色配色。桌面采用记录与详情分栏，760px 以下详情占满记录区，关闭后返回列表。工具输出默认按字符预算显示开头和结尾，完整内容仍保留在内存中并可按需展开或复制。详情正文统一纵向滚动，代码和宽表格在内容区内横向滚动，并尊重系统的减少动态效果设置。
 
 页面界面沿用英文，文件始终只在当前浏览器内解析。

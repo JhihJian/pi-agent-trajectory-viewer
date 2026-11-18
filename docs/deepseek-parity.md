@@ -40,4 +40,4 @@
 
 完整应用验收覆盖 320、390、768、1024、1440px，检查横向溢出、详情边界、键盘焦点、触控和页面异常。截图写入 `.pi/acceptance/`：`range-desktop.png`、`detail-desktop.png`、`range-mobile.png`、`detail-mobile.png`。截图可用于复查桌面与移动端的范围高亮、详情布局和操作入口。
 
-参考 CSS 保持逐字复用，宿主样式集中在 `src/app.css` 与 `src/detail.css`。时间线交互迁移至 `src/TrajectoryTimeline.jsx`，Pi 投影及搜索适配在 `src/timeline.js`，表格与详情各自维护展示职责。
+参考 CSS 保持逐字复用，主题聚合入口为 `src/components/styles/index.css`，组件结构样式为 `src/components/styles/viewer.module.css`，演示外壳样式为 `src/showcase/viewer-demo.css`。时间线交互迁移至 `src/components/TrajectoryTimeline.jsx`，Pi 投影及搜索适配在 `src/lib/timeline.js`，表格与详情各自维护展示职责。
