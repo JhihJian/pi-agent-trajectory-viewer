@@ -4,6 +4,21 @@ React 组件仓库与 live site，把 Pi Agent 会话变成可读的轨迹：时
 
 组件自包含样式与逻辑，可在任意 React 18 应用中单独使用；live site 提供每个组件的活体预览、源码浏览和复制。
 
+[Live site](https://jhihjian.github.io/pi-agent-trajectory-viewer/) · [Components](https://jhihjian.github.io/pi-agent-trajectory-viewer/#/components) · [Viewer](https://jhihjian.github.io/pi-agent-trajectory-viewer/#/viewer)
+
+## Quick start
+
+需要 Node.js 20+ 与 npm。
+
+```bash
+git clone git@github.com:JhihJian/pi-agent-trajectory-viewer.git
+cd pi-agent-trajectory-viewer
+npm install
+npm run dev
+```
+
+开发服务监听 `0.0.0.0`。如果默认端口被占用，Vite 会自动选择下一个可用端口。
+
 ## 仓库结构
 
 ```
@@ -35,14 +50,7 @@ src/
   data/              组件目录（catalog）与演示用样例会话
 ```
 
-## 启动
-
-```bash
-npm install
-npm run dev
-```
-
-开发服务监听 `0.0.0.0`。如果默认端口被占用，Vite 会自动选择下一个可用端口。
+## 构建与预览
 
 ```bash
 npm run build
@@ -52,6 +60,8 @@ npm run preview
 生产构建输出到 `dist/`。
 
 ## Live site
+
+线上站点由 GitHub Pages 从 `main` 分支自动部署（`.github/workflows/pages.yml`），每次推送先跑完整测试再发布。
 
 - `#/`：概览与精选组件
 - `#/components`：组件列表，支持分类与关键词过滤
