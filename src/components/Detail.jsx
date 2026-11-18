@@ -2,10 +2,10 @@ import React, { useEffect, useId, useRef, useState } from 'react'
 import { Maximize2, Minimize2, WrapText, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { formatDuration } from './parser.js'
+import { formatDuration } from '../lib/parser.js'
 import { CopyButton, JsonTree } from './JsonTree.jsx'
 import tableCss from './reference/TrajectoryTable.module.css'
-import './detail.css'
+import './styles/detail.css'
 
 const kindLabel = { user: 'User', message: 'Assistant', tool: 'Tool', compacted: 'Compacted' }
 const kindClass = { user: tableCss.user, message: tableCss.assistantVioletBright, tool: tableCss.toolAmber, compacted: tableCss.compacted }

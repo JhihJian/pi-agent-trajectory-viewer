@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { allFolded, flattenTurns, foldRecords, foldTargets, projectTimeline, toggleAllFolds, toggleCallGroups, toggleFold } from '../src/trajectory-view.js'
+import { allFolded, flattenTurns, foldRecords, foldTargets, projectTimeline, toggleAllFolds, toggleCallGroups, toggleFold } from '../src/lib/trajectory-view.js'
 
 const turns = [
   { turn: 1, groups: [

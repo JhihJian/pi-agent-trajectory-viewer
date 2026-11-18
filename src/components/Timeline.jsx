@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { TrajectoryTimeline } from './TrajectoryTimeline.jsx'
-import { flattenTurns } from './trajectory-view.js'
-import { deriveTrajectoryTimeline, matchesSearch } from './timeline.js'
+import { flattenTurns } from '../lib/trajectory-view.js'
+import { deriveTrajectoryTimeline, matchesSearch } from '../lib/timeline.js'
 
 const labels = {
   'kind.system': 'System', 'kind.user': 'User', 'kind.context': 'Context', 'kind.compacted': 'Compacted',

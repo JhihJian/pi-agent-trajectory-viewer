@@ -1,6 +1,6 @@
 # 第三方来源与许可
 
-`src/reference/` 的样式及 `src/TrajectoryTimeline.jsx` 的时间线交互来源于 DeepSeek Harness，参考版本为 `f3803c9697`，路径为 `packages/client/ui-trajectory/src/client/` 与 `packages/client/ui-theme/src/styles/`。数据投影与组件集成经过 Pi JSONL 适配。
+`src/components/reference/` 的样式及 `src/components/TrajectoryTimeline.jsx` 的时间线交互来源于 DeepSeek Harness，参考版本为 `f3803c9697`，路径为 `packages/client/ui-trajectory/src/client/` 与 `packages/client/ui-theme/src/styles/`。数据投影与组件集成经过 Pi JSONL 适配。
 
 原始许可保留如下：
 

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Detail } from './Detail.jsx'
-import { flattenTurns, foldRecords, foldTargets } from './trajectory-view.js'
-import { matchesSearch } from './timeline.js'
+import { flattenTurns, foldRecords, foldTargets } from '../lib/trajectory-view.js'
+import { matchesSearch } from '../lib/timeline.js'
 import tableCss from './reference/TrajectoryTable.module.css'
 
 const kindLabel = { user: 'User', message: 'Assistant', tool: 'Tool', compacted: 'Compacted' }

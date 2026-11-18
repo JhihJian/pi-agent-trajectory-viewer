@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Copy, WrapText } from 'lucide-react'
-import './detail.css'
+import './styles/detail.css'
 
 export async function copyText(value) {
   if (globalThis.navigator?.clipboard?.writeText) {

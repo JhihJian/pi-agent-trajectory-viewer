@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { parsePiJsonl } from '../src/parser.js'
+import { parsePiJsonl } from '../src/lib/parser.js'
 
 test('parses a Pi session into turns, assistant output, and paired tool result', () => {
   const source = [

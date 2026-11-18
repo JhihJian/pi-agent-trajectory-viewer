@@ -1,4 +1,4 @@
-@import './reference/shiki.css';
+@import './components/styles/index.css';
 
 :root {
   color-scheme: light;

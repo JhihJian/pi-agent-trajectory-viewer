@@ -16,8 +16,8 @@ const tool = { kind: 'tool', recordId: 't', callId: 't', toolName: 'bash', text:
 const records = [{ cell: { kind: 'message', recordId: 'earlier', input: 3, output: 2, cacheRead: 4 }, assistantId: 'earlier' }, { cell: assistant, assistantId: 'a' }, { cell: tool, assistantId: 'a' }, { cell: { kind: 'message', recordId: 'later', input: 999 }, assistantId: 'later' }]
 
 const ssr = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' })
-const detail = await ssr.ssrLoadModule('/src/Detail.jsx')
-const tree = await ssr.ssrLoadModule('/src/JsonTree.jsx')
+const detail = await ssr.ssrLoadModule('/src/components/Detail.jsx')
+const tree = await ssr.ssrLoadModule('/src/components/JsonTree.jsx')
 test.after(() => ssr.close())
 const render = (cell, extra = {}) => renderToStaticMarkup(React.createElement(detail.Detail, { cell, records, onClose() {}, onNavigate() {}, ...extra }))
 
@@ -148,7 +148,7 @@ async function connectCdp(url) {
 test('browser interactions preserve tabs, copy exact values, navigate and reveal content', { timeout: 60000 }, async (t) => {
   const executable = await chromeExecutable()
   if (!executable) return t.skip('Chrome is not installed. SSR and pure behavior checks still run.')
-  const fixtureModule = `import React from 'react'; import {createRoot} from 'react-dom/client'; import {flushSync} from 'react-dom'; import {Detail} from './src/Detail.jsx';
+  const fixtureModule = `import React from 'react'; import {createRoot} from 'react-dom/client'; import {flushSync} from 'react-dom'; import {Detail} from './src/components/Detail.jsx';
     const root=createRoot(document.getElementById('root'));
     window.renderDetail=(cell,records)=>flushSync(()=>root.render(React.createElement(Detail,{cell,records,onNavigate:cell=>window.navigated=cell.recordId,onClose:()=>window.detailClosed=true})));
     window.copied=[]; Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>window.copied.push(value)}});

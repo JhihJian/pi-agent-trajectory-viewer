@@ -1,8 +1,8 @@
 // Adapted from DeepSeek ui-trajectory at f3803c9697. Pointer, viewport and range behavior retained.
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Tooltip } from './Tooltip.jsx'
-import { flattenTurns } from './trajectory-view.js'
-import { deriveTrajectoryTimeline, formatTimelineOffset } from './timeline.js'
+import { flattenTurns } from '../lib/trajectory-view.js'
+import { deriveTrajectoryTimeline, formatTimelineOffset } from '../lib/timeline.js'
 import css from './reference/TrajectoryTimeline.module.css'
 const MINIMUM_DRAG_PX = 3
 const MINIMUM_ZOOM_OPERATIONS = 4

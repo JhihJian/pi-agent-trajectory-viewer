@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { deriveTrajectoryTimeline, trajectoryTimelineFocusIndexes, matchesSearch } from '../src/timeline.js'
+import { deriveTrajectoryTimeline, trajectoryTimelineFocusIndexes, matchesSearch } from '../src/lib/timeline.js'
 
 const turns = [{ turn: 1, groups: [{ cells: [
   { kind: 'user', recordId: 'u', text: 'hello', startedAt: null },
