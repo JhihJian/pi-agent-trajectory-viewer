@@ -1,0 +1,181 @@
+/* 主题层：把 reference 令牌（DeepSeek 蓝灰体系）重映射为 todo-web 的
+ * 出版物式黑白灰。reference/ 逐字复制禁止修改，全部视觉通过令牌覆盖完成。
+ * 变量声明在 body 上，与 design-platform.css 同特异性、后加载生效。 */
+
+body {
+  /* ---------- 字体 ---------- */
+  --dsh-font-family-text-default: 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'PingFang SC', 'Microsoft YaHei', monospace;
+  --dsw-font-family: var(--dsh-font-family-text-default);
+  --dsw-font-family-brand: Georgia, 'Times New Roman', 'Songti SC', SimSun, serif;
+  --dsh-font-family-code-default: var(--dsh-font-family-text-default);
+  --ds-font-family-code: var(--dsh-font-family-code-default);
+
+  /* todo-web 正文 13px；markdown 阶梯随 --dsh-content-font-size 同步缩放。 */
+  --dsh-content-font-size: 13px;
+
+  /* 标题走衬线，与 todo-web 的 task-table th / detail-title 一致。 */
+  --dsw-font-markdown-h1-font-family: var(--dsw-font-family-brand);
+  --dsw-font-markdown-h1-font-weight: 600;
+  --dsw-font-markdown-h2-font-family: var(--dsw-font-family-brand);
+  --dsw-font-markdown-h2-font-weight: 600;
+  --dsw-font-markdown-h3-font-family: var(--dsw-font-family-brand);
+  --dsw-font-markdown-h3-font-weight: 600;
+  --dsw-font-markdown-h4-font-family: var(--dsw-font-family-brand);
+
+  /* ---------- 直接消费的静态色 ---------- */
+  /* turn 高亮色（color-mix 22% onto 白底）由蓝色改为近黑。 */
+  --dsw-static-blue-500: #1a1a1a;
+
+  /* ---------- 表面与文字 ---------- */
+  --dsw-alias-bg-base: #ffffff;
+  --dsw-alias-bg-layer-1: #ffffff;
+  --dsw-alias-bg-layer-2: #ffffff;
+  --dsw-alias-bg-layer-3: #ffffff;
+  --dsw-alias-bg-module-platform: #f5f5f5;
+  --dsw-alias-bg-overlay: #f5f5f5;
+  --dsw-alias-bg-multi-select: #f5f5f5;
+  --dsw-alias-bg-document-preview: #f5f5f5;
+  --dsw-alias-bg-document-selection: rgba(26, 26, 26, 0.14);
+  --dsw-alias-label-document-preview: #666666;
+
+  --dsw-alias-border-l1: #e5e5e5;
+  --dsw-alias-border-l2: #e5e5e5;
+  --dsw-alias-border-l2-darkmode-thin: #e5e5e5;
+  --dsw-alias-border-l3: #cccccc;
+  --dsw-alias-border-l4: #cccccc;
+
+  --dsw-alias-label-primary: #1a1a1a;
+  --dsw-alias-label-primary-dimmed: #1a1a1a;
+  --dsw-alias-label-primary-bluish: #1a1a1a;
+  --dsw-alias-label-primary-foreground: #ffffff;
+  --dsw-alias-label-primary-inverted: #ffffff;
+  --dsw-alias-label-secondary: #666666;
+  --dsw-alias-label-tertiary: #999999;
+  --dsw-alias-label-caption: #999999;
+  --dsw-alias-label-dimmed: #cccccc;
+  --dsw-alias-label-deep-diving: #1a1a1a;
+  --dsw-alias-label-deep-diving-shimmer: #666666;
+  --dsw-alias-label-shimmer: rgba(26, 26, 26, 0.3);
+  --dsw-alias-menu-icon: #1a1a1a;
+
+  /* ---------- 品牌与交互 ---------- */
+  --dsw-alias-brand-primary: #1a1a1a;
+  --dsw-alias-brand-primary-invert: #ffffff;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: #1a1a1a;
+  --dsw-alias-brand-text: #1a1a1a;
+  --dsw-alias-link: #1a1a1a;
+
+  --dsw-alias-interactive-bg-hover: rgba(26, 26, 26, 0.05);
+  --dsw-alias-interactive-bg-hover-accent: rgba(26, 26, 26, 0.14);
+  --dsw-alias-interactive-bg-hover-solid: #e5e5e5;
+  --dsw-alias-interactive-bg-hover-danger: rgba(180, 60, 60, 0.05);
+  --dsw-alias-interactive-bg-active: rgba(26, 26, 26, 0.1);
+
+  --dsw-alias-button-primary-fill: #1a1a1a;
+  --dsw-alias-button-primary-hover: #000000;
+  --dsw-alias-button-primary-dimmed: #f5f5f5;
+  --dsw-alias-button-info-fill: #1a1a1a;
+  --dsw-alias-button-info-hover: #000000;
+  --dsw-alias-button-contrast-fill: #666666;
+  --dsw-alias-button-elevated-fill: #ffffff;
+  --dsw-alias-button-floating-fill: #ffffff;
+  --dsw-alias-button-floating-hover: #e5e5e5;
+  --dsw-alias-button-ghost-active-border: #999999;
+  --dsw-alias-button-ghost-active-fill: #f5f5f5;
+  --dsw-alias-button-ghost-active-hover: #e5e5e5;
+  --dsw-alias-button-tool-bar-fill: rgba(102, 102, 102, 0.5);
+  --dsw-alias-button-tool-bar-fill-invisible: rgba(102, 102, 102, 0.36);
+  --dsw-alias-button-tool-bar-hover: rgba(102, 102, 102, 0.6);
+
+  /* ---------- 状态：黑白灰分级，仅错误保留红色 ---------- */
+  --dsw-alias-state-business-primary: #1a1a1a;
+  --dsw-alias-state-business-tertiary: #f0f0f0;
+  --dsw-alias-state-success-primary: #1a1a1a;
+  --dsw-alias-state-success-secondary: #666666;
+  --dsw-alias-state-success-tertiary: #e5e5e5;
+  --dsw-alias-state-warn-label: #666666;
+  --dsw-alias-state-warn-primary: #999999;
+  --dsw-alias-state-warn-secondary: #999999;
+  --dsw-alias-state-warn-tertiary: #e5e5e5;
+  --dsw-alias-state-done-primary: #999999;
+  --dsw-alias-state-idle-primary: #cccccc;
+  --dsw-alias-state-error-primary: #b43c3c;
+  --dsw-alias-state-error-secondary: #4d4d4d;
+
+  /* ---------- Markdown 与代码 ---------- */
+  --dsw-alias-markdown-code-block: #f5f5f5;
+  --dsw-alias-markdown-code-block-banner: #f5f5f5;
+  --dsw-alias-markdown-inline-code: #e5e5e5;
+  --dsw-alias-markdown-citation: #f5f5f5;
+  --dsw-alias-markdown-tag: #f5f5f5;
+  --dsw-alias-markdown-placeholder: #999999;
+  --dsw-alias-markdown-code-segment-selected: #ffffff;
+  --dsw-alias-markdown-code-segment-unselected: #f5f5f5;
+  --dsw-alias-code-diff-added: rgba(26, 26, 26, 0.06);
+  --dsw-alias-code-diff-deleted: rgba(180, 60, 60, 0.08);
+  --dsw-alias-file-diff-added-bg: #f2f2f2;
+  --dsw-alias-file-diff-added-gutter: #f7f7f7;
+  --dsw-alias-file-diff-added-marker: #1a1a1a;
+  --dsw-alias-file-diff-deleted-bg: #f7ecec;
+  --dsw-alias-file-diff-deleted-gutter: #faf1f1;
+  --dsw-alias-file-diff-deleted-marker: #b43c3c;
+
+  /* ---------- 浮层与杂项 ---------- */
+  --dsw-alias-toast-bg: #1a1a1a;
+  --dsw-alias-toast-label: #ffffff;
+  --dsw-alias-tooltip-bg: #1a1a1a;
+  --dsw-alias-tooltip-key-bg: #4d4d4d;
+  --dsw-alias-switch-thumb: #ffffff;
+  --dsw-alias-turn-trigger-bg: #f5f5f5;
+  --dsw-alias-turn-trigger-bg-hover: rgba(26, 26, 26, 0.05);
+  --dsw-alias-scrollbar-bg-l1: #d0d0d0;
+  --dsw-alias-scrollbar-bg-l2: #d0d0d0;
+  --dsw-alias-scrollbar-hover-l1: #999999;
+  --dsw-alias-scrollbar-hover-l2: #999999;
+  --dsw-specific-bubble: #f5f5f5;
+  --dsw-specific-bubble-highlight: #e5e5e5;
+  --dsw-specific-input-major: #ffffff;
+  --dsw-specific-login-input: #f5f5f5;
+  --dsw-specific-sidebar-fill: #ffffff;
+  --dsw-specific-sidebar-nav-item-active: #f5f5f5;
+  --dsw-specific-sidebar-nav-item-active-accent: #e5e5e5;
+  --dsw-specific-selector: #f5f5f5;
+  --dsw-specific-tip: #f5f5f5;
+  --dsw-menu-surface-fill: rgba(255, 255, 255, 0.94);
+  --dsw-alias-menu-group-header-fill: #ffffff;
+  --dsw-specific-menu: var(--dsw-menu-surface-fill);
+}
+
+/* 圆角归零：todo-web 全部直角，仅微型控件保留 2px。 */
+:root {
+  --dsw-radius-xs: 2px;
+  --dsw-radius-sm: 2px;
+  --dsw-radius-md: 0px;
+  --dsw-radius-lg: 0px;
+  --dsw-radius-xl: 0px;
+  --dsw-radius-panel: 0px;
+}
+
+/* 阴影抽掉柔光，只留 0.5px 发丝描边承担浮层分离；选择器与
+ * gradient-shadow-text.css 相同，靠加载顺序覆盖。 */
+body,
+body * {
+  --dsw-elevation-stroke: 0 0 0 0.5px var(--dsw-alias-border-l3);
+  --dsw-elevation-panel: var(--dsw-elevation-stroke);
+  --dsw-elevation-prominent: var(--dsw-elevation-stroke);
+  --dsw-elevation-soft: var(--dsw-elevation-stroke);
+}
+
+/* 语法高亮同步转为灰阶，注释最浅、关键字/函数最深。 */
+:root {
+  --shiki-token-constant: #1a1a1a;
+  --shiki-token-string: #666666;
+  --shiki-token-string-expression: #666666;
+  --shiki-token-comment: #999999;
+  --shiki-token-keyword: #1a1a1a;
+  --shiki-token-parameter: #666666;
+  --shiki-token-function: #1a1a1a;
+  --shiki-token-punctuation: #666666;
+  --shiki-token-link: #1a1a1a;
+}

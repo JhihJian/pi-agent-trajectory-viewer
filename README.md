@@ -25,7 +25,7 @@ npm run dev
 src/
   components/        组件层（自包含，统一从 index.js 导出）
     reference/       DeepSeek harness 逐字复制的参考样式，禁止修改
-    styles/          组件层样式（主题聚合 index.css、viewer.module.css、detail.css）
+    styles/          组件层样式（主题聚合 index.css、黑白灰令牌主题 theme.css、viewer.module.css、detail.css）
     TrajectoryViewer.jsx   工作区容器：工具栏 + 时间线 + 表格联动
     TrajectoryToolbar.jsx  Duration / Turns / Calls 切换与搜索
     TrajectoryTable.jsx    虚拟化记录表格与详情分栏
@@ -106,11 +106,11 @@ const { turns } = parsePiJsonl(sessionText)
 - 容器组件：`TrajectoryViewer`（传入 `turns` 即可工作，内部接管选中、搜索、折叠与时间线选区编排；可选 `defaultDuration`、`defaultQuery`、`sessionRevision`、`onSelectionChange`）
 - 展示组件：`TrajectoryToolbar`、`Timeline`、`TrajectoryTable`、`Turn`、`TrajectoryTimeline`、`Detail`、`JsonTree`、`CopyButton`、`Tooltip` 等，全部为受控 props
 
-组件层自带主题（`src/components/styles/index.css` 聚合 reference 样式）与结构样式；宿主页面只需提供页面框架。
+组件层自带主题（`src/components/styles/index.css` 聚合 reference 样式，`theme.css` 把令牌重映射为 todo-web 的出版物式黑白灰）；宿主页面只需提供页面框架。
 
 ## 轨迹切换
 
-工具栏的切换行为对齐 DeepSeek `ui-trajectory`，时间投影与折叠计算集中在 `src/lib/trajectory-view.js`。三个按钮均按 `aria-pressed` 显示持久选中态：浅绿色背景、绿色文字和图标，以及细描边。Duration 开启耗时视图时选中，Turns / Calls 全部折叠时选中，鼠标移开后仍保留高亮。
+工具栏的切换行为对齐 DeepSeek `ui-trajectory`，时间投影与折叠计算集中在 `src/lib/trajectory-view.js`。三个按钮均按 `aria-pressed` 显示持久选中态：浅灰背景、近黑文字和图标，以及细描边。Duration 开启耗时视图时选中，Turns / Calls 全部折叠时选中，鼠标移开后仍保留高亮。
 
 - **Duration**：首次使用默认关闭，所有记录按顺序等宽显示，之后记住浏览器内的选择。开启后按已有耗时绘制，并压缩操作之间的空闲间隔。没有耗时的记录显示为时间点，没有时间戳的记录不进入耗时视图。总时长为零时明确提示并回退到记录顺序。切换会清除旧选区并恢复完整视窗，详情始终使用原始时间和耗时。
 - **Turns**：默认展开。点击 `⊟` 折叠所有包含多条记录的 Turn，保留首条记录及步骤数、工具调用数摘要。全部折叠后图标变为 `⊞`，再次点击展开全部。只有一条记录的 Turn 保持原样。
@@ -153,6 +153,6 @@ npm run build
 
 由于原组件依赖 Cordis、DSH Session 和客户端 primitives，本项目使用独立的 Pi JSONL 适配器提供 `Trajectory` 所需的展示数据。
 
-组件专属视觉调整集中在 `src/components/styles/`（结构）与 `src/showcase/`（演示外壳），不修改 `src/components/reference/` 的来源文件。演示站点提供组件预览与源码浏览，`#/viewer` 保留文件导入引导、工作区紧凑表格与角色配色。桌面采用记录与详情分栏，760px 以下详情占满记录区，关闭后返回列表。工具输出默认按字符预算显示开头和结尾，完整内容仍保留在内存中并可按需展开或复制。详情正文统一纵向滚动，代码和宽表格在内容区内横向滚动，并尊重系统的减少动态效果设置。
+组件专属视觉调整集中在 `src/components/styles/`（结构与黑白灰令牌主题）与 `src/showcase/`（演示外壳），不修改 `src/components/reference/` 的来源文件。整体视觉对齐 todo-web 的出版物式风格：白底、1px #e5e5e5 细线、直角、等宽字体正文、衬线标题，仅错误状态保留 #b43c3c 红色。演示站点提供组件预览与源码浏览，`#/viewer` 保留文件导入引导、工作区紧凑表格与黑白灰角色分级（用户近黑、工具中灰、错误红）。桌面采用记录与详情分栏，760px 以下详情占满记录区，关闭后返回列表。工具输出默认按字符预算显示开头和结尾，完整内容仍保留在内存中并可按需展开或复制。详情正文统一纵向滚动，代码和宽表格在内容区内横向滚动，并尊重系统的减少动态效果设置。
 
 页面界面沿用英文，文件始终只在当前浏览器内解析。
