@@ -1,6 +1,32 @@
-/* 主题层：把 reference 令牌（DeepSeek 蓝灰体系）重映射为 todo-web 的
- * 出版物式黑白灰。reference/ 逐字复制禁止修改，全部视觉通过令牌覆盖完成。
- * 变量声明在 body 上，与 design-platform.css 同特异性、后加载生效。 */
+/* 主题层：把 reference 令牌（DeepSeek 蓝灰体系）重映射为低饱和的莫兰迪
+ * 大地色系。reference/ 逐字复制禁止修改，全部视觉通过令牌覆盖完成。
+ * 变量声明在 body 上，与 design-platform.css 同特异性、后加载生效。
+ *
+ * 角色取色链路（reference 内固定，不可绕过）：
+ *   user    → state-business-primary（同时兼任选中/焦点强调色）
+ *   context → state-success-primary 68% 混 label-secondary
+ *   助手    → brand-primary-new 60% 混 state-error-secondary（两值取同色保证干净）
+ *   tool    → state-warn-label / warn-tertiary
+ *   error   → state-error-primary */
+
+:root {
+  /* ---------- 莫兰迪大地色板 ---------- */
+  --mori-ink: #2b2925;          /* 主文字：暖调近黑 */
+  --mori-ink-2: #6e6860;        /* 次级文字 */
+  --mori-muted: #9c968c;        /* 辅助文字 */
+  --mori-line: #e7e3dc;         /* 1px 细线 */
+  --mori-line-strong: #d6d0c6;  /* 输入框/浮层描边 */
+  --mori-paper: #f4f1ec;        /* 暖纸面：分区头/折叠条 */
+  --mori-paper-2: #faf9f6;      /* 悬停底 */
+  --mori-sage: #5a6b52;        /* 灰绿：user、选中、主按钮 */
+  --mori-sage-deep: #4d5c46;
+  --mori-mist: #647788;        /* 雾蓝：assistant 角色 */
+  --mori-umber: #8a6f4d;       /* 赭石：tool、运行中 */
+  --mori-clay: #a3564a;        /* 赤陶：错误 */
+  --mori-moss-bg: #e9ece2;     /* 灰绿浅底 */
+  --mori-mist-bg: #e8ecf0;     /* 雾蓝浅底 */
+  --mori-sand-bg: #f0eadd;     /* 赭石浅底 */
+}
 
 body {
   /* ---------- 字体 ---------- */
@@ -11,7 +37,7 @@ body {
   --dsh-font-family-code-default: var(--dsh-font-family-text-default);
   --ds-font-family-code: var(--dsh-font-family-code-default);
 
-  /* todo-web 正文 13px；markdown 阶梯随 --dsh-content-font-size 同步缩放。 */
+  /* 正文 13px；markdown 阶梯随 --dsh-content-font-size 同步缩放。 */
   --dsh-content-font-size: 13px;
 
   /* 标题走衬线，与 todo-web 的 task-table th / detail-title 一致。 */
@@ -24,158 +50,100 @@ body {
   --dsw-font-markdown-h4-font-family: var(--dsw-font-family-brand);
 
   /* ---------- 直接消费的静态色 ---------- */
-  /* turn 高亮色（color-mix 22% onto 白底）由蓝色改为近黑。 */
-  --dsw-static-blue-500: #1a1a1a;
+  /* turn 高亮（color-mix 22% onto 白底）由蓝改为灰绿。 */
+  --dsw-static-blue-500: var(--mori-sage);
 
   /* ---------- 表面与文字 ---------- */
   --dsw-alias-bg-base: #ffffff;
   --dsw-alias-bg-layer-1: #ffffff;
   --dsw-alias-bg-layer-2: #ffffff;
   --dsw-alias-bg-layer-3: #ffffff;
-  --dsw-alias-bg-module-platform: #f5f5f5;
-  --dsw-alias-bg-overlay: #f5f5f5;
-  --dsw-alias-bg-multi-select: #f5f5f5;
-  --dsw-alias-bg-document-preview: #f5f5f5;
-  --dsw-alias-bg-document-selection: rgba(26, 26, 26, 0.14);
-  --dsw-alias-label-document-preview: #666666;
+  --dsw-alias-bg-module-platform: var(--mori-paper);
+  --dsw-alias-bg-overlay: var(--mori-paper);
+  --dsw-alias-bg-multi-select: var(--mori-paper);
+  --dsw-alias-bg-document-preview: var(--mori-paper);
+  --dsw-alias-bg-document-selection: rgba(90, 107, 82, 0.16);
+  --dsw-alias-label-document-preview: var(--mori-ink-2);
 
-  --dsw-alias-border-l1: #e5e5e5;
-  --dsw-alias-border-l2: #e5e5e5;
-  --dsw-alias-border-l2-darkmode-thin: #e5e5e5;
-  --dsw-alias-border-l3: #cccccc;
-  --dsw-alias-border-l4: #cccccc;
+  --dsw-alias-border-l1: var(--mori-line);
+  --dsw-alias-border-l2: var(--mori-line);
+  --dsw-alias-border-l2-darkmode-thin: var(--mori-line);
+  --dsw-alias-border-l3: var(--mori-line-strong);
+  --dsw-alias-border-l4: var(--mori-line-strong);
 
-  --dsw-alias-label-primary: #1a1a1a;
-  --dsw-alias-label-primary-dimmed: #1a1a1a;
-  --dsw-alias-label-primary-bluish: #1a1a1a;
+  --dsw-alias-label-primary: var(--mori-ink);
+  --dsw-alias-label-primary-dimmed: var(--mori-ink);
+  --dsw-alias-label-primary-bluish: var(--mori-ink);
   --dsw-alias-label-primary-foreground: #ffffff;
   --dsw-alias-label-primary-inverted: #ffffff;
-  --dsw-alias-label-secondary: #666666;
-  --dsw-alias-label-tertiary: #999999;
-  --dsw-alias-label-caption: #999999;
-  --dsw-alias-label-dimmed: #cccccc;
-  --dsw-alias-label-deep-diving: #1a1a1a;
-  --dsw-alias-label-deep-diving-shimmer: #666666;
-  --dsw-alias-label-shimmer: rgba(26, 26, 26, 0.3);
-  --dsw-alias-menu-icon: #1a1a1a;
+  --dsw-alias-label-secondary: var(--mori-ink-2);
+  --dsw-alias-label-tertiary: var(--mori-muted);
+  --dsw-alias-label-caption: var(--mori-muted);
+  --dsw-alias-label-dimmed: #c4beb3;
+  --dsw-alias-label-deep-diving: var(--mori-ink);
+  --dsw-alias-label-deep-diving-shimmer: var(--mori-ink-2);
+  --dsw-alias-label-shimmer: rgba(43, 41, 37, 0.3);
+  --dsw-alias-menu-icon: var(--mori-ink);
 
   /* ---------- 品牌与交互 ---------- */
-  --dsw-alias-brand-primary: #1a1a1a;
+  --dsw-alias-brand-primary: var(--mori-sage);
   --dsw-alias-brand-primary-invert: #ffffff;
-  --dsw-alias-brand-primary-new-colorprimary-new-color: #1a1a1a;
-  --dsw-alias-brand-text: #1a1a1a;
-  --dsw-alias-link: #1a1a1a;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: var(--mori-mist);
+  --dsw-alias-brand-text: var(--mori-ink);
+  --dsw-alias-link: var(--mori-sage);
 
-  --dsw-alias-interactive-bg-hover: rgba(26, 26, 26, 0.05);
-  --dsw-alias-interactive-bg-hover-accent: rgba(26, 26, 26, 0.14);
-  --dsw-alias-interactive-bg-hover-solid: #e5e5e5;
-  --dsw-alias-interactive-bg-hover-danger: rgba(180, 60, 60, 0.05);
-  --dsw-alias-interactive-bg-active: rgba(26, 26, 26, 0.1);
+  --dsw-alias-interactive-bg-hover: rgba(43, 41, 37, 0.045);
+  --dsw-alias-interactive-bg-hover-accent: rgba(90, 107, 82, 0.14);
+  --dsw-alias-interactive-bg-hover-solid: #eae6df;
+  --dsw-alias-interactive-bg-hover-danger: rgba(163, 86, 74, 0.05);
+  --dsw-alias-interactive-bg-active: rgba(43, 41, 37, 0.09);
 
-  --dsw-alias-button-primary-fill: #1a1a1a;
-  --dsw-alias-button-primary-hover: #000000;
-  --dsw-alias-button-primary-dimmed: #f5f5f5;
-  --dsw-alias-button-info-fill: #1a1a1a;
-  --dsw-alias-button-info-hover: #000000;
-  --dsw-alias-button-contrast-fill: #666666;
+  --dsw-alias-button-primary-fill: var(--mori-sage-deep);
+  --dsw-alias-button-primary-hover: #41503b;
+  --dsw-alias-button-primary-dimmed: var(--mori-paper);
+  --dsw-alias-button-info-fill: var(--mori-mist);
+  --dsw-alias-button-info-hover: #55667a;
+  --dsw-alias-button-contrast-fill: var(--mori-ink-2);
   --dsw-alias-button-elevated-fill: #ffffff;
   --dsw-alias-button-floating-fill: #ffffff;
-  --dsw-alias-button-floating-hover: #e5e5e5;
-  --dsw-alias-button-ghost-active-border: #999999;
-  --dsw-alias-button-ghost-active-fill: #f5f5f5;
-  --dsw-alias-button-ghost-active-hover: #e5e5e5;
-  --dsw-alias-button-tool-bar-fill: rgba(102, 102, 102, 0.5);
-  --dsw-alias-button-tool-bar-fill-invisible: rgba(102, 102, 102, 0.36);
-  --dsw-alias-button-tool-bar-hover: rgba(102, 102, 102, 0.6);
+  --dsw-alias-button-floating-hover: var(--mori-line);
+  --dsw-alias-button-ghost-active-border: var(--mori-muted);
+  --dsw-alias-button-ghost-active-fill: var(--mori-paper);
+  --dsw-alias-button-ghost-active-hover: #eae6df;
+  --dsw-alias-button-tool-bar-fill: rgba(110, 104, 96, 0.5);
+  --dsw-alias-button-tool-bar-fill-invisible: rgba(110, 104, 96, 0.36);
+  --dsw-alias-button-tool-bar-hover: rgba(110, 104, 96, 0.6);
 
-  /* ---------- 状态：黑白灰分级，仅错误保留红色 ---------- */
-  --dsw-alias-state-business-primary: #1a1a1a;
-  --dsw-alias-state-business-tertiary: #f0f0f0;
-  --dsw-alias-state-success-primary: #1a1a1a;
-  --dsw-alias-state-success-secondary: #666666;
-  --dsw-alias-state-success-tertiary: #e5e5e5;
-  --dsw-alias-state-warn-label: #666666;
-  --dsw-alias-state-warn-primary: #999999;
-  --dsw-alias-state-warn-secondary: #999999;
-  --dsw-alias-state-warn-tertiary: #e5e5e5;
-  --dsw-alias-state-done-primary: #999999;
-  --dsw-alias-state-idle-primary: #cccccc;
-  --dsw-alias-state-error-primary: #b43c3c;
-  --dsw-alias-state-error-secondary: #4d4d4d;
+  /* ---------- 状态：莫兰迪角色色 ----------
+   * user 与选中强调共用灰绿；assistant 走 brand+error-secondary 纯雾蓝混合。 */
+  --dsw-alias-state-business-primary: var(--mori-sage);
+  --dsw-alias-state-business-tertiary: var(--mori-mist-bg);
+  --dsw-alias-state-success-primary: var(--mori-sage);
+  --dsw-alias-state-success-secondary: var(--mori-mist);
+  --dsw-alias-state-success-tertiary: var(--mori-moss-bg);
+  --dsw-alias-state-warn-label: var(--mori-umber);
+  --dsw-alias-state-warn-primary: var(--mori-umber);
+  --dsw-alias-state-warn-secondary: var(--mori-umber);
+  --dsw-alias-state-warn-tertiary: var(--mori-sand-bg);
+  --dsw-alias-state-done-primary: var(--mori-muted);
+  --dsw-alias-state-idle-primary: #c4beb3;
+  --dsw-alias-state-error-primary: var(--mori-clay);
+  --dsw-alias-state-error-secondary: var(--mori-mist);
 
   /* ---------- Markdown 与代码 ---------- */
-  --dsw-alias-markdown-code-block: #f5f5f5;
-  --dsw-alias-markdown-code-block-banner: #f5f5f5;
-  --dsw-alias-markdown-inline-code: #e5e5e5;
-  --dsw-alias-markdown-citation: #f5f5f5;
-  --dsw-alias-markdown-tag: #f5f5f5;
-  --dsw-alias-markdown-placeholder: #999999;
+  --dsw-alias-markdown-code-block: var(--mori-paper-2);
+  --dsw-alias-markdown-code-block-banner: var(--mori-paper-2);
+  --dsw-alias-markdown-inline-code: var(--mori-line);
+  --dsw-alias-markdown-citation: var(--mori-paper);
+  --dsw-alias-markdown-tag: var(--mori-paper);
+  --dsw-alias-markdown-placeholder: var(--mori-muted);
   --dsw-alias-markdown-code-segment-selected: #ffffff;
-  --dsw-alias-markdown-code-segment-unselected: #f5f5f5;
-  --dsw-alias-code-diff-added: rgba(26, 26, 26, 0.06);
-  --dsw-alias-code-diff-deleted: rgba(180, 60, 60, 0.08);
-  --dsw-alias-file-diff-added-bg: #f2f2f2;
-  --dsw-alias-file-diff-added-gutter: #f7f7f7;
-  --dsw-alias-file-diff-added-marker: #1a1a1a;
-  --dsw-alias-file-diff-deleted-bg: #f7ecec;
-  --dsw-alias-file-diff-deleted-gutter: #faf1f1;
-  --dsw-alias-file-diff-deleted-marker: #b43c3c;
-
-  /* ---------- 浮层与杂项 ---------- */
-  --dsw-alias-toast-bg: #1a1a1a;
-  --dsw-alias-toast-label: #ffffff;
-  --dsw-alias-tooltip-bg: #1a1a1a;
-  --dsw-alias-tooltip-key-bg: #4d4d4d;
-  --dsw-alias-switch-thumb: #ffffff;
-  --dsw-alias-turn-trigger-bg: #f5f5f5;
-  --dsw-alias-turn-trigger-bg-hover: rgba(26, 26, 26, 0.05);
-  --dsw-alias-scrollbar-bg-l1: #d0d0d0;
-  --dsw-alias-scrollbar-bg-l2: #d0d0d0;
-  --dsw-alias-scrollbar-hover-l1: #999999;
-  --dsw-alias-scrollbar-hover-l2: #999999;
-  --dsw-specific-bubble: #f5f5f5;
-  --dsw-specific-bubble-highlight: #e5e5e5;
-  --dsw-specific-input-major: #ffffff;
-  --dsw-specific-login-input: #f5f5f5;
-  --dsw-specific-sidebar-fill: #ffffff;
-  --dsw-specific-sidebar-nav-item-active: #f5f5f5;
-  --dsw-specific-sidebar-nav-item-active-accent: #e5e5e5;
-  --dsw-specific-selector: #f5f5f5;
-  --dsw-specific-tip: #f5f5f5;
-  --dsw-menu-surface-fill: rgba(255, 255, 255, 0.94);
-  --dsw-alias-menu-group-header-fill: #ffffff;
-  --dsw-specific-menu: var(--dsw-menu-surface-fill);
-}
-
-/* 圆角归零：todo-web 全部直角，仅微型控件保留 2px。 */
-:root {
-  --dsw-radius-xs: 2px;
-  --dsw-radius-sm: 2px;
-  --dsw-radius-md: 0px;
-  --dsw-radius-lg: 0px;
-  --dsw-radius-xl: 0px;
-  --dsw-radius-panel: 0px;
-}
-
-/* 阴影抽掉柔光，只留 0.5px 发丝描边承担浮层分离；选择器与
- * gradient-shadow-text.css 相同，靠加载顺序覆盖。 */
-body,
-body * {
-  --dsw-elevation-stroke: 0 0 0 0.5px var(--dsw-alias-border-l3);
-  --dsw-elevation-panel: var(--dsw-elevation-stroke);
-  --dsw-elevation-prominent: var(--dsw-elevation-stroke);
-  --dsw-elevation-soft: var(--dsw-elevation-stroke);
-}
-
-/* 语法高亮同步转为灰阶，注释最浅、关键字/函数最深。 */
-:root {
-  --shiki-token-constant: #1a1a1a;
-  --shiki-token-string: #666666;
-  --shiki-token-string-expression: #666666;
-  --shiki-token-comment: #999999;
-  --shiki-token-keyword: #1a1a1a;
-  --shiki-token-parameter: #666666;
-  --shiki-token-function: #1a1a1a;
-  --shiki-token-punctuation: #666666;
-  --shiki-token-link: #1a1a1a;
-}
+  --dsw-alias-markdown-code-segment-unselected: var(--mori-paper);
+  --dsw-alias-code-diff-added: rgba(90, 107, 82, 0.08);
+  --dsw-alias-code-diff-deleted: rgba(163, 86, 74, 0.09);
+  --dsw-alias-file-diff-added-bg: #eef0e6;
+  --dsw-alias-file-diff-added-gutter: #f4f5ef;
+  --dsw-alias-file-diff-added-marker: var(--mori-sage);
+  --dsw-alias-file-diff-deleted-bg: #f3e7e3;
+  --dsw-alias-file-diff-deleted-gutter: #f9f1ee;
+  --dsw-alias-file-diff-deleted-marker: var(--mori-clay);

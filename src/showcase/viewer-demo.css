@@ -92,7 +92,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .no-results h2 { margin: 0; color: var(--gray-600); font-size: 15px; font-weight: 600; }
 .no-results p { max-width: 300px; margin: 0; font-size: 13px; line-height: 1.6; }
 
-/* The host owns these adaptations; reference styles stay unchanged. */
+/* The host owns these adaptations. */
 .record-details { width: min(var(--details-width, 480px), calc(100% - 240px)); }
 .details-resizer { flex: 0 0 5px; cursor: col-resize; touch-action: none; background: var(--viewer-border); }
 .details-resizer:hover, .details-resizer:focus-visible { background: var(--gray-900); }
