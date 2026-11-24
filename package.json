@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
+    "build:lib": "vite build --config vite.lib.config.js",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "prepare": "npm run build:lib"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.26",
@@ -21,5 +23,20 @@
   },
   "devDependencies": {
     "playwright": "^1.64.1"
-  }
+  },
+  "main": "./dist-lib/index.js",
+  "module": "./dist-lib/index.js",
+  "exports": {
+    ".": "./dist-lib/index.js",
+    "./style.css": "./dist-lib/index.css"
+  },
+  "files": [
+    "dist-lib",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

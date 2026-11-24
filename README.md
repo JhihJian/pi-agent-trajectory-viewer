@@ -50,6 +50,24 @@ src/
   data/              组件目录（catalog）与演示用样例会话
 ```
 
+## 作为库引用
+
+除演示站外，组件层可以打成普通 ESM 包供其他应用引用：
+
+```sh
+npm run build:lib     # 产出 dist-lib/index.js 与 dist-lib/index.css
+```
+
+```js
+import { TrajectoryViewer, parsePiJsonl } from 'pi-agent-trajectory-viewer'
+import 'pi-agent-trajectory-viewer/style.css'
+
+const { turns } = parsePiJsonl(sessionText)
+<TrajectoryViewer turns={turns} />
+```
+
+`package.json` 已声明 `main`/`module`/`exports`/`files`，`prepare` 在打包安装时自动构建。React 保持外部化，由宿主提供（本库按 React 18 构建），其余依赖打进产物。同仓库下 `session-viewer` 就是这样的宿主。
+
 ## 构建与预览
 
 ```bash
