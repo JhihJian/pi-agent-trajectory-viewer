@@ -202,21 +202,30 @@ function buildRows(rows) {
   return turns
 }
 
+// Invalid lines become diagnostics instead of aborting the parse, so a damaged
+// session still renders; without a session header the first invalid line keeps
+// raising the original error.
 export function parsePiJsonl(text) {
   const lines = text.split(/\r?\n/).filter((line) => line.trim() !== '')
   if (lines.length === 0) throw new Error('文件为空')
-  const rows = lines.map((line, lineIndex) => {
-    try { return JSON.parse(line) }
-    catch { throw new Error(`第 ${lineIndex + 1} 行不是有效 JSON`) }
+  const rows = []
+  const diagnostics = []
+  lines.forEach((line, lineIndex) => {
+    try { rows.push(JSON.parse(line)) }
+    catch { diagnostics.push({ type: 'jsonl_parse_error', lineNumber: lineIndex + 1, code: 'invalid_json', preview: line.slice(0, 160) }) }
   })
   const header = rows.find((row) => row.type === 'session')
-  if (!header) throw new Error('不是 Pi Agent session JSONL：缺少 type=session 首行')
+  if (!header) {
+    const invalid = diagnostics[0]
+    throw new Error(invalid ? `第 ${invalid.lineNumber} 行不是有效 JSON` : '不是 Pi Agent session JSONL：缺少 type=session 首行')
+  }
   const branch = activeBranch(rows)
   const turns = buildRows(branch)
   const messages = branch.filter((row) => row.type === 'message').length
   return {
     header,
     rows: branch,
+    diagnostics,
     turns,
     stats: {
       lines: rows.length,
@@ -224,6 +233,7 @@ export function parsePiJsonl(text) {
       messages,
       turns: turns.length,
       tools: turns.flatMap((turn) => turn.groups.flatMap((group) => group.cells)).filter((cell) => cell.kind === 'tool').length,
+      diagnostics: diagnostics.length,
     },
   }
 }

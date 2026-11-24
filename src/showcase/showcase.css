@@ -119,3 +119,43 @@
 @media (prefers-reduced-motion: reduce) {
   .site-card { transition: none; }
 }
+
+.demo-toolbar { padding: 14px 10px; }
+.demo-tooltip { padding: 26px 14px; }
+.demo-tooltip-target { padding: 8px 14px; border: 1px solid var(--site-border, #dfe5e2); border-radius: 6px; background: #fff; color: var(--dsw-alias-label-primary, #27332e); font-size: 12px; cursor: default; }
+
+/* Workspace combined demo */
+.demo-catalog { height: 520px; display: flex; flex-direction: column; }
+.demo-catalog > * { flex: 1; }
+.demo-workspace { height: 720px; }
+.workspace-demo { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; border: 1px solid var(--site-border, #dfe5e2); border-radius: 10px; background: #fff; }
+.workspace-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--site-border, #dfe5e2); background: #fff; }
+.workspace-head strong { font-size: 13px; }
+.workspace-head span { color: var(--dsw-alias-label-tertiary, #8a958e); font-size: 11px; }
+.workspace-head .workspace-button { margin-left: auto; }
+.workspace-body { position: relative; display: flex; flex: 1; min-height: 0; }
+.workspace-session { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+.workspace-tailbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 34px; padding: 0 14px; border-bottom: 1px solid var(--site-border, #dfe5e2); background: #f7f9f8; color: var(--dsw-alias-label-secondary, #5b6760); font-size: 11px; }
+.workspace-tailbar em { color: var(--dsw-alias-label-tertiary, #8a958e); font-style: normal; font-variant-numeric: tabular-nums; }
+.workspace-tailbar .workspace-button { margin-left: auto; }
+.workspace-tailbar .workspace-button + .workspace-button { margin-left: 0; }
+.workspace-button { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid var(--site-border, #dfe5e2); border-radius: 6px; background: #fff; color: var(--dsw-alias-label-primary, #27332e); font-size: 11px; cursor: pointer; }
+.workspace-button:hover { background: var(--viewer-surface, #f5f7f6); }
+.workspace-button:disabled { color: var(--dsw-alias-label-tertiary, #8a958e); cursor: default; }
+.workspace-viewer { flex: 1; min-height: 0; }
+.workspace-rules-panel { position: absolute; z-index: 20; top: 8px; right: 8px; bottom: 8px; display: flex; flex-direction: column; width: min(460px, 80%); padding: 8px; border: 1px solid var(--site-border, #dfe5e2); border-radius: 10px; background: #fff; box-shadow: 0 12px 34px #152a2022; }
+.workspace-rules-close { align-self: flex-end; margin: 8px 6px; }
+
+/* Standalone fullscreen demos and the preview fullscreen chip */
+.preview-toolbar { display: flex; justify-content: flex-end; padding: 0 2px 6px; }
+.preview-fullscreen { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--site-border, #dfe5e2); border-radius: 999px; background: #fff; color: var(--dsw-alias-label-secondary, #5b6760); font-size: 10px; font-weight: 500; text-decoration: none; }
+.preview-fullscreen:hover { color: var(--viewer-accent, #256b5b); border-color: var(--viewer-accent, #256b5b); }
+.demo-standalone { position: fixed; z-index: 60; inset: 0; display: flex; flex-direction: column; background: var(--viewer-surface, #f5f7f6); }
+.demo-standalone-head { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 16px; border-bottom: 1px solid var(--site-border, #dfe5e2); background: #fff; }
+.demo-standalone-back { color: var(--dsw-alias-label-primary, #27332e); font-size: 12px; font-weight: 600; text-decoration: none; }
+.demo-standalone-back:hover { color: var(--viewer-accent, #256b5b); }
+.demo-standalone-head span { color: var(--dsw-alias-label-tertiary, #8a958e); font-size: 11px; }
+.demo-standalone-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.demo-standalone-body .demo-scope { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.demo-standalone-body .demo-scope > * { flex: 1; min-height: 0; }
+.demo-standalone-body .demo-viewer, .demo-standalone-body .demo-workspace, .demo-standalone-body .demo-table { height: 100%; }

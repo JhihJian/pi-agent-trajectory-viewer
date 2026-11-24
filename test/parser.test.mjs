@@ -44,3 +44,18 @@ test('rejects malformed or non-Pi JSONL', () => {
   assert.throws(() => parsePiJsonl('{"type":"message"}'), /缺少 type=session/)
   assert.throws(() => parsePiJsonl('{'), /不是有效 JSON/)
 })
+
+test('invalid lines become diagnostics instead of aborting the session parse', () => {
+  const source = [
+    'not json at all',
+    JSON.stringify({ type: 'session', id: 's' }),
+    '{ broken',
+    JSON.stringify({ type: 'message', id: 'u1', parentId: 's', message: { role: 'user', content: [{ type: 'text', text: 'still parses' }] } }),
+  ].join('\n')
+  const result = parsePiJsonl(source)
+  assert.deepEqual(result.diagnostics.map((diagnostic) => [diagnostic.lineNumber, diagnostic.code]), [[1, 'invalid_json'], [3, 'invalid_json']])
+  assert.equal(result.diagnostics[0].preview, 'not json at all')
+  assert.equal(result.stats.diagnostics, 2)
+  assert.equal(result.stats.turns, 1)
+  assert.equal(result.turns[0].groups[0].cells[0].text, 'still parses')
+})

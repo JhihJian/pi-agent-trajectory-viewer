@@ -35,7 +35,7 @@ export function ViewerDemo() {
       </div><footer className="welcome-footer"><ShieldCheck size={15} /> Files stay in your browser. Nothing is uploaded.</footer>
     </> : <>
       <header className="session-header"><span className="brand-mark" aria-hidden="true">π</span><div className="session-title"><span className="eyebrow">PI AGENT / SESSION</span><h1 title={fileName}>{fileName}</h1><p title={data.header.cwd}>{data.header.cwd || 'Working directory unavailable'} <span>·</span> {data.header.modelId || data.header.provider || 'Recorded session'}</p></div><div className="header-actions"><span className="stat"><strong>{data.stats.turns}</strong> turns</span><span className="stat"><strong>{data.stats.tools}</strong> tools</span><button type="button" className="header-button" disabled={loading} onClick={openFile}><FolderOpen size={14} /> {loading ? 'Reading…' : 'Open another'}</button></div></header>
-      <TrajectoryViewer turns={data.turns} sessionRevision={sessionRevision} />
+      <TrajectoryViewer turns={data.turns} rows={data.rows} diagnostics={data.diagnostics} sessionRevision={sessionRevision} />
     </>}
   </main>
 }

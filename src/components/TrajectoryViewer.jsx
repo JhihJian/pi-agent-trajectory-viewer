@@ -2,6 +2,9 @@ import React, { useMemo, useState } from 'react'
 import { TrajectoryToolbar } from './TrajectoryToolbar.jsx'
 import { Timeline } from './Timeline.jsx'
 import { TrajectoryTable } from './TrajectoryTable.jsx'
+import { ReadingView } from './ReadingView.jsx'
+import { TraceView } from './TraceView.jsx'
+import { DiagnosticView } from './DiagnosticView.jsx'
 import { allFolded, flattenTurns, foldTargets, toggleAllFolds, toggleCallGroups, toggleFold } from '../lib/trajectory-view.js'
 import { matchesSearch, trajectoryTimelineFocusIndexes } from '../lib/timeline.js'
 import viewsCss from './reference/views.module.css'
@@ -15,7 +18,9 @@ const storeDuration = value => {
   try { localStorage.setItem('pi-trajectory-duration', String(value)) } catch { /* Storage may be disabled. */ }
 }
 
-export function TrajectoryViewer({ turns, sessionRevision = 0, defaultDuration, defaultQuery = '', onSelectionChange, className = '' }) {
+const baseViews = ['ledger', 'reading', 'trace']
+
+export function TrajectoryViewer({ turns, rows, diagnostics = [], sessionRevision = 0, defaultDuration, defaultView = 'ledger', defaultQuery = '', rules, onSelectionChange, className = '' }) {
   const [selected, setSelected] = useState(null)
   const [query, setQuery] = useState(defaultQuery)
   const [actualDuration, setActualDuration] = useState(defaultDuration ?? readStoredDuration)
@@ -23,6 +28,10 @@ export function TrajectoryViewer({ turns, sessionRevision = 0, defaultDuration, 
   const [collapsedAssistants, setCollapsedAssistants] = useState(new Set())
   const [range, setRange] = useState(null)
   const [focusRequest, setFocusRequest] = useState(null)
+  const [view, setView] = useState(defaultView)
+  const views = useMemo(() => rows ? [...baseViews, 'diagnostic'] : baseViews, [rows])
+  const activeView = views.includes(view) ? view : 'ledger'
+  const sessionHeader = useMemo(() => { const header = rows?.find((row) => row.type === 'session'); return { id: header?.id, cwd: header?.cwd } }, [rows])
   const records = useMemo(() => flattenTurns(turns), [turns])
   const targets = useMemo(() => foldTargets(records), [records])
   const focusIndexes = useMemo(() => trajectoryTimelineFocusIndexes(turns, range, actualDuration ? 'duration' : 'sequence'), [turns, range, actualDuration])
@@ -62,8 +71,13 @@ export function TrajectoryViewer({ turns, sessionRevision = 0, defaultDuration, 
     setCollapsedAssistants(next.collapsedAssistants)
   }
   return <div className={`${viewsCss.root} ${styles.root} trajectory-shell ${className}`}>
-    <TrajectoryToolbar query={query} setQuery={setQuery} actualDuration={actualDuration} setActualDuration={changeDuration} allTurnsCollapsed={allFolded(targets.turns, collapsedTurns)} onToggleTurns={() => { clearRange(); setCollapsedTurns(current => toggleAllFolds(current, targets.turns)) }} allAssistantsCollapsed={allFolded(targets.assistants, collapsedAssistants)} onToggleAssistants={toggleAssistants} />
-    <Timeline key={sessionRevision} turns={turns} selectedId={selected?.recordId} onSelect={changeSelection} actualDuration={actualDuration} query={query} range={range} onRangeChange={changeRange} onRecordFocus={index => setFocusRequest({ index, focus: true })} />
-    <div className={`${viewsCss.ledger} trajectory-ledger`}><TrajectoryTable turns={turns} selectedId={selected?.recordId} onSelect={changeSelection} collapsedAssistants={collapsedAssistants} onToggleAssistant={id => { clearRange(); setCollapsedAssistants(current => toggleFold(current, id)) }} collapsedTurns={collapsedTurns} onToggleTurn={turn => { clearRange(); setCollapsedTurns(current => toggleFold(current, turn)) }} query={query} focusIndexes={focusIndexes} focusRequest={focusRequest} onClearRange={clearRange} /></div>
+    <TrajectoryToolbar query={query} setQuery={setQuery} view={activeView} setView={setView} views={views} showModes={activeView === 'ledger'} actualDuration={actualDuration} setActualDuration={changeDuration} allTurnsCollapsed={allFolded(targets.turns, collapsedTurns)} onToggleTurns={() => { clearRange(); setCollapsedTurns(current => toggleAllFolds(current, targets.turns)) }} allAssistantsCollapsed={allFolded(targets.assistants, collapsedAssistants)} onToggleAssistants={toggleAssistants} />
+    {activeView === 'ledger' && <>
+      <Timeline key={sessionRevision} turns={turns} selectedId={selected?.recordId} onSelect={changeSelection} actualDuration={actualDuration} query={query} range={range} onRangeChange={changeRange} onRecordFocus={index => setFocusRequest({ index, focus: true })} />
+      <div className={`${viewsCss.ledger} trajectory-ledger`}><TrajectoryTable turns={turns} selectedId={selected?.recordId} onSelect={changeSelection} collapsedAssistants={collapsedAssistants} onToggleAssistant={id => { clearRange(); setCollapsedAssistants(current => toggleFold(current, id)) }} collapsedTurns={collapsedTurns} onToggleTurn={turn => { clearRange(); setCollapsedTurns(current => toggleFold(current, turn)) }} query={query} focusIndexes={focusIndexes} focusRequest={focusRequest} onClearRange={clearRange} /></div>
+    </>}
+    {activeView === 'reading' && <div className={`${viewsCss.ledger} trajectory-ledger`}><ReadingView turns={turns} selectedId={selected?.recordId ?? null} onSelect={changeSelection} query={query} title={sessionHeader.cwd || 'Session'} rules={rules} /></div>}
+    {activeView === 'trace' && <div className={`${viewsCss.ledger} trajectory-ledger`}><TraceView turns={turns} selectedId={selected?.recordId ?? null} onSelect={changeSelection} query={query} header={sessionHeader} rules={rules} /></div>}
+    {activeView === 'diagnostic' && <div className={`${viewsCss.ledger} trajectory-ledger`}><DiagnosticView rows={rows ?? []} diagnostics={diagnostics} query={query} /></div>}
   </div>
 }

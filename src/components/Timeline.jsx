@@ -10,7 +10,7 @@ const labels = {
   'timeline.aria': 'Timeline overview', 'timeline.noTimingData': 'No timing data',
   'timeline.overviewAria': 'Timeline: drag to select, wheel to zoom, right-drag to pan. Escape clears selection. Home resets zoom.',
 }
-const translate = (key, values = {}) => key === 'timeline.total' ? `Total ${values.duration}` : key === 'timeline.started' ? `Started ${values.time}` : key === 'timeline.ttftDecoding' ? `TTFT ${values.ttft} · Decoding ${values.decoding}` : labels[key] || key
+export const translate = (key, values = {}) => key === 'timeline.total' ? `Total ${values.duration}` : key === 'timeline.started' ? `Started ${values.time}` : key === 'timeline.ttftDecoding' ? `TTFT ${values.ttft} · Decoding ${values.decoding}` : labels[key] || key
 
 export function Timeline({ turns, selectedId, onSelect, actualDuration, query = '', range = null, onRangeChange = () => {}, onRecordFocus }) {
   const records = useMemo(() => flattenTurns(turns), [turns])

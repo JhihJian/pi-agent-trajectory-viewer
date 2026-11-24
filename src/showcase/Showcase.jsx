@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Box, Braces, GitBranch, ListTree, Menu, Search, Sparkles, Table2 } from 'lucide-react'
 import { catalog, categories, componentFilename, matchesComponent } from '../data/catalog'
 import { copyText } from '../components/JsonTree.jsx'
+import { ComponentDemo } from './ComponentDemo.jsx'
 import { ComponentPreview } from './ComponentPreview.jsx'
 import { HomePage } from './HomePage.jsx'
 import { ViewerDemo } from './ViewerDemo.jsx'
@@ -11,6 +12,7 @@ const icons = { table: Table2, timeline: ListTree, json: Braces, detail: GitBran
 
 function readRoute() {
   const path = window.location.hash.replace(/^#\/?/, '')
+  if (path.startsWith('demo/')) return path
   if (path === 'components' || path.startsWith('components/')) return path
   if (path === 'viewer') return path
   return ''
@@ -38,7 +40,8 @@ export function Showcase() {
   const navigate = path => { window.location.hash = path ? `#/${path}` : '#/' }
   const isGallery = route === 'components'
   const isViewer = route === 'viewer'
-  const isHome = !isGallery && !selected && !isViewer
+  const demoEntry = route.startsWith('demo/') ? catalog.find(entry => entry.slug === route.slice(5)) : null
+  const isHome = !isGallery && !selected && !isViewer && !demoEntry
   const filtered = catalog.filter(entry => (category === 'all' || entry.category === category) && matchesComponent(entry, query))
   const showCopied = async value => { try { await copyText(value); setCopied(value); setTimeout(() => setCopied(''), 1600) } catch { /* Clipboard unavailable. */ } }
   const navLinks = <>
@@ -92,6 +95,13 @@ export function Showcase() {
       </main>
     </div>}
     {isViewer && <main className="site-viewer"><ViewerDemo /></main>}
+    {demoEntry && <main className="demo-standalone">
+      <div className="demo-standalone-head">
+        <a className="demo-standalone-back" href={`#/components/${demoEntry.slug}`}>← {demoEntry.name}</a>
+        <span>Standalone preview · resize freely</span>
+      </div>
+      <div className="demo-standalone-body"><ComponentDemo demo={demoEntry.slug} /></div>
+    </main>}
     <footer className="site-footer">Pi Trajectory UI · components render locally, session files never leave the browser.</footer>
   </div>
 }

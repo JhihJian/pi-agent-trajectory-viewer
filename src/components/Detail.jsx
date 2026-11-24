@@ -59,7 +59,7 @@ function CodeBlock({ children }) {
   return <div className="detail-code-block"><div className="detail-code-toolbar"><CopyButton value={value} label="Copy code" /></div><pre>{children}</pre></div>
 }
 
-function Markdown({ value }) {
+export function Markdown({ value }) {
   return <div className={`${tableCss.markdownPreview} detail-markdown`}><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ pre: CodeBlock, img: ({ alt }) => <span className="detail-missing-image">Image reference{alt ? ` (${alt})` : ''}: embedded image data is not available here.</span> }}>{value}</ReactMarkdown></div>
 }
 
