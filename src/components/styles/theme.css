@@ -147,3 +147,64 @@ body {
   --dsw-alias-file-diff-deleted-bg: #f3e7e3;
   --dsw-alias-file-diff-deleted-gutter: #f9f1ee;
   --dsw-alias-file-diff-deleted-marker: var(--mori-clay);
+
+  /* ---------- 浮层与杂项 ---------- */
+  --dsw-alias-toast-bg: var(--mori-ink);
+  --dsw-alias-toast-label: #ffffff;
+  --dsw-alias-tooltip-bg: var(--mori-ink);
+  --dsw-alias-tooltip-key-bg: #57524a;
+  --dsw-alias-switch-thumb: #ffffff;
+  --dsw-alias-turn-trigger-bg: var(--mori-paper);
+  --dsw-alias-turn-trigger-bg-hover: rgba(43, 41, 37, 0.045);
+  --dsw-alias-scrollbar-bg-l1: #d6d0c6;
+  --dsw-alias-scrollbar-bg-l2: #d6d0c6;
+  --dsw-alias-scrollbar-hover-l1: var(--mori-muted);
+  --dsw-alias-scrollbar-hover-l2: var(--mori-muted);
+  --dsw-specific-bubble: var(--mori-paper);
+  --dsw-specific-bubble-highlight: #eae6df;
+  --dsw-specific-input-major: #ffffff;
+  --dsw-specific-login-input: var(--mori-paper-2);
+  --dsw-specific-sidebar-fill: #ffffff;
+  --dsw-specific-sidebar-nav-item-active: var(--mori-paper);
+  --dsw-specific-sidebar-nav-item-active-accent: var(--mori-line);
+  --dsw-specific-selector: var(--mori-paper);
+  --dsw-specific-tip: var(--mori-paper);
+  --dsw-menu-surface-fill: rgba(255, 255, 255, 0.94);
+  --dsw-alias-menu-group-header-fill: #ffffff;
+  --dsw-specific-menu: var(--dsw-menu-surface-fill);
+}
+
+/* 圆角归零：直角版面，仅微型控件保留 2px。 */
+:root {
+  --dsw-radius-xs: 2px;
+  --dsw-radius-sm: 2px;
+  --dsw-radius-md: 0px;
+  --dsw-radius-lg: 0px;
+  --dsw-radius-xl: 0px;
+  --dsw-radius-panel: 0px;
+}
+
+/* 阴影抽掉柔光，只留 0.5px 发丝描边承担浮层分离；选择器与
+ * gradient-shadow-text.css 相同，靠加载顺序覆盖。 */
+body,
+body * {
+  --dsw-elevation-stroke: 0 0 0 0.5px var(--dsw-alias-border-l3);
+  --dsw-elevation-panel: var(--dsw-elevation-stroke);
+  --dsw-elevation-prominent: var(--dsw-elevation-stroke);
+  --dsw-elevation-soft: var(--dsw-elevation-stroke);
+}
+
+/* 语法高亮：莫兰迪低饱和——雾蓝常量、灰绿字符串、赭石关键字、
+ * 暖灰注释，整体与大地色底协调。 */
+:root {
+  --shiki-token-constant: var(--mori-mist);
+  --shiki-token-string: #5f7057;
+  --shiki-token-string-expression: #5f7057;
+  --shiki-token-comment: var(--mori-muted);
+  --shiki-token-comment-doc: var(--mori-muted);
+  --shiki-token-keyword: #7d6248;
+  --shiki-token-function: #8a6f4d;
+  --shiki-token-parameter: var(--mori-ink-2);
+  --shiki-token-punctuation: var(--mori-ink-2);
+  --shiki-token-link: var(--mori-sage);
+}
