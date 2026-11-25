@@ -26,7 +26,9 @@ export function Collapsible({ open, onOpenChange, className, children }) {
 
   return (
     <CollapsibleContext.Provider value={{ open: isOpen, toggle }}>
-      <div className={className}>{children}</div>
+      <div className={className} data-open={isOpen || undefined}>
+        {children}
+      </div>
     </CollapsibleContext.Provider>
   )
 }

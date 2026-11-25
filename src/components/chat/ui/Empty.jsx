@@ -11,6 +11,11 @@ export function EmptyHeader({ children }) {
 }
 
 /** @param {{ children: React.ReactNode }} props */
+export function EmptyEyebrow({ children }) {
+  return <div className="pi-chat-empty-eyebrow">{children}</div>
+}
+
+/** @param {{ children: React.ReactNode }} props */
 export function EmptyTitle({ children }) {
   return <h1 className="pi-chat-empty-title">{children}</h1>
 }

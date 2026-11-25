@@ -90,7 +90,6 @@
 .site-copy:hover { background: var(--gray-200); }
 .component-preview { overflow: hidden; border: 1px solid var(--site-border); background: #fff; }
 .demo-chat { height: 640px; display: flex; flex-direction: column; background: var(--white); }
-.pi-chat-scope { display: flex; flex-direction: column; height: 100%; min-height: 320px; }
 .component-preview[data-miniature] { border: 0; height: 100%; }
 .component-preview > * { height: 100%; }
 .demo-scope { height: 100%; }

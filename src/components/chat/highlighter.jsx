@@ -5,6 +5,8 @@ import {
 } from 'shiki/core'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 
+import morandiTheme from './morandi-theme.js'
+
 // 按需加载的语言，首次使用才加载。
 const languages = {
   bash: () => import('shiki/langs/shellscript.mjs'),
@@ -39,7 +41,7 @@ let highlighter
 
 function getHighlighter() {
   highlighter ??= createHighlighterCore({
-    themes: [import('shiki/themes/github-light.mjs')],
+    themes: [morandiTheme],
     langs: [],
     engine: createJavaScriptRegexEngine({ forgiving: true }),
   })
@@ -85,7 +87,7 @@ export async function loadHighlighter(language) {
       const tokenize = (text) =>
         shiki.codeToTokens(text, {
           lang,
-          themes: { light: 'github-light' },
+          themes: { light: 'morandi-light' },
           defaultColor: false,
           grammarState: state,
         }).tokens
@@ -98,19 +100,16 @@ export async function loadHighlighter(language) {
 
       return {
         lines: tokens.map((line) =>
-          line.map((token, index) => (
-            <span
-              key={index}
-              style={
-                /** @type {import('react').CSSProperties} */ ({
-                  ...token.htmlStyle,
-                  color: 'var(--pi-chat-shiki-light)',
-                })
-              }
-            >
-              {token.content}
-            </span>
-          )),
+          line.map((token, index) => {
+            // defaultColor:false 时主题色在 --shiki-light 变量里，直接映射到 color。
+            const style = /** @type {import('react').CSSProperties} */ (token.htmlStyle)
+            const fallback = /** @type {any} */ (token.htmlStyle)?.['--shiki-light']
+            return (
+              <span key={index} style={fallback ? { ...style, color: fallback } : style}>
+                {token.content}
+              </span>
+            )
+          }),
         ),
         state: shiki.getLastGrammarState(tokens),
       }

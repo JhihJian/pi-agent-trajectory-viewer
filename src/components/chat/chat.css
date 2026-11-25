@@ -1,61 +1,89 @@
-/* AI chat 组件样式（从 ursi-flow chat-web 迁移）。
- * 全部选择器带 .pi-chat- 前缀，不影响宿主页面；
- * 灰阶令牌在 .pi-chat-scope 上定义，并桥接本仓库莫兰迪主题
- * （存在 --mori-* 时自动取主题色，否则回落原黑白灰）。 */
+/* AI chat 组件样式（从 ursi-flow chat-web 迁移后按本仓库
+ * 编辑风莫兰迪体系重构）：暖纸白面、1px 发丝线、直角、
+ * 等宽正文、衬线标题、微型大写标签；错误仅用赤陶色。
+ * 全部选择器带 .pi-chat- 前缀，令牌定义在 .pi-chat-chat 根上，
+ * 与站点 --mori-* / --shiki-token-* 变量联动，脱离宿主也可用。 */
 
-.pi-chat-scope {
-  /* 原组件令牌 → 莫兰迪桥接（无 --mori-* 时回落黑白灰）。 */
-  --pi-chat-black: var(--mori-ink, #000000);
-  --pi-chat-gray-900: var(--mori-ink, #1a1a1a);
-  --pi-chat-gray-600: var(--mori-ink-2, #666666);
-  --pi-chat-gray-400: var(--mori-muted, #999999);
-  --pi-chat-gray-200: var(--mori-line, #e5e5e5);
-  --pi-chat-white: var(--mori-paper-2, #ffffff);
-  --pi-chat-error: var(--mori-clay, #b43c3c);
-  --pi-chat-shiki-light: var(--mori-ink, #24292e);
+.pi-chat-chat {
+  /* ---------- 令牌（对齐 theme.css 莫兰迪大地色板） ---------- */
+  --pi-chat-ink: #2b2925;
+  --pi-chat-ink-2: #6e6860;
+  --pi-chat-muted: #9c968c;
+  --pi-chat-line: #e7e3dc;
+  --pi-chat-line-strong: #d6d0c6;
+  --pi-chat-paper: #f4f1ec;
+  --pi-chat-paper-2: #faf9f6;
+  --pi-chat-sage: #5a6b52;
+  --pi-chat-sage-deep: #4d5c46;
+  --pi-chat-umber: #8a6f4d;
+  --pi-chat-clay: #a3564a;
+  --pi-chat-moss-bg: #e9ece2;
+  --pi-chat-mist: #647788;
 
-  --pi-chat-font-serif: Georgia, 'Times New Roman', serif;
-  --pi-chat-font-mono: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  --pi-chat-font-mono: 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'PingFang SC', 'Microsoft YaHei', monospace;
+  --pi-chat-font-serif: var(--dsw-font-family-brand, Georgia, 'Times New Roman', serif);
 
-  --pi-chat-space-xs: 4px;
-  --pi-chat-space-sm: 8px;
-  --pi-chat-space-md: 16px;
-  --pi-chat-space-lg: 24px;
-  --pi-chat-space-xl: 32px;
-
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 320px;
+  background: #ffffff;
+  color: var(--pi-chat-ink);
   font-family: var(--pi-chat-font-mono);
   font-size: 13px;
-  line-height: 1.5;
-  color: var(--pi-chat-gray-900);
+  line-height: 1.6;
 }
 
-.pi-chat-scope button {
+.pi-chat-chat ::selection {
+  background: var(--pi-chat-moss-bg);
+}
+
+.pi-chat-chat button {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
 }
 
-.pi-chat-scope input,
-.pi-chat-scope textarea,
-.pi-chat-scope select {
+.pi-chat-chat input,
+.pi-chat-chat textarea,
+.pi-chat-chat select {
   font-family: inherit;
 }
 
-/* ---- Layout ---- */
-
-.pi-chat-chat {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
+.pi-chat-chat button:focus-visible,
+.pi-chat-chat input:focus-visible,
+.pi-chat-chat textarea:focus-visible,
+.pi-chat-chat select:focus-visible,
+.pi-chat-chat a:focus-visible {
+  outline: 2px solid rgba(90, 107, 82, 0.45);
+  outline-offset: 1px;
 }
+
+.pi-chat-spin {
+  animation: pi-chat-spin 0.9s linear infinite;
+}
+
+@keyframes pi-chat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pi-chat-spin {
+    animation: none;
+  }
+}
+
+/* ---- 布局 ---- */
 
 .pi-chat-chat-empty {
   display: flex;
   flex: 1;
   align-items: center;
   justify-content: center;
-  padding: var(--pi-chat-space-lg);
+  padding: 24px;
 }
 
 .pi-chat-chat-scroll {
@@ -63,118 +91,152 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pi-chat-line-strong) transparent;
+}
+
+.pi-chat-chat-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pi-chat-chat-scroll::-webkit-scrollbar-thumb {
+  background: var(--pi-chat-line-strong);
+}
+
+.pi-chat-chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--pi-chat-muted);
 }
 
 .pi-chat-chat-messages {
   display: flex;
   flex-direction: column;
-  gap: var(--pi-chat-space-lg);
+  gap: 18px;
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: var(--pi-chat-space-lg);
+  padding: 26px 22px 18px;
 }
 
 .pi-chat-chat-composer {
   flex: none;
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 0 var(--pi-chat-space-lg) var(--pi-chat-space-lg);
+  padding: 0 22px 20px;
 }
 
-/* ---- Buttons ---- */
+/* ---- 按钮 ---- */
 
 .pi-chat-btn {
   display: inline-flex;
+  height: 30px;
   align-items: center;
   justify-content: center;
-  gap: var(--pi-chat-space-xs);
-  padding: var(--pi-chat-space-sm) var(--pi-chat-space-md);
-  border: 1px solid var(--pi-chat-gray-900);
-  background: var(--pi-chat-white);
-  color: var(--pi-chat-gray-900);
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--pi-chat-line-strong);
+  background: #ffffff;
+  color: var(--pi-chat-ink-2);
   font-size: 12px;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
 .pi-chat-btn:hover {
-  background: var(--pi-chat-gray-200);
+  background: var(--pi-chat-line);
+  border-color: var(--pi-chat-line-strong);
+  color: var(--pi-chat-ink);
 }
 
 .pi-chat-btn:disabled {
-  opacity: 0.4;
+  border-color: var(--pi-chat-line);
+  background: #ffffff;
+  color: var(--pi-chat-muted);
   cursor: default;
 }
 
-.pi-chat-btn:disabled:hover {
-  background: var(--pi-chat-white);
-}
-
 .pi-chat-btn-primary {
-  background: var(--pi-chat-gray-900);
-  color: var(--pi-chat-white);
+  border-color: var(--pi-chat-sage-deep);
+  background: var(--pi-chat-sage-deep);
+  color: #ffffff;
 }
 
 .pi-chat-btn-primary:hover {
-  background: var(--pi-chat-black);
+  border-color: #41503b;
+  background: #41503b;
+  color: #ffffff;
 }
 
+.pi-chat-btn-primary:disabled,
 .pi-chat-btn-primary:disabled:hover {
-  background: var(--pi-chat-gray-900);
+  border-color: var(--pi-chat-line-strong);
+  background: var(--pi-chat-paper);
+  color: var(--pi-chat-muted);
 }
 
 .pi-chat-btn-outline:hover {
-  background: var(--pi-chat-gray-200);
+  background: var(--pi-chat-paper);
+  border-color: var(--pi-chat-muted);
 }
 
 .pi-chat-btn-secondary {
-  border-color: var(--pi-chat-gray-200);
-  color: var(--pi-chat-gray-600);
+  border-color: var(--pi-chat-line);
+  color: var(--pi-chat-ink-2);
 }
 
 .pi-chat-btn-secondary:hover {
-  border-color: var(--pi-chat-gray-400);
-  color: var(--pi-chat-gray-900);
+  border-color: var(--pi-chat-line-strong);
+  background: var(--pi-chat-paper);
 }
 
 .pi-chat-btn-ghost {
   border-color: transparent;
   background: none;
-  color: var(--pi-chat-gray-600);
 }
 
 .pi-chat-btn-ghost:hover {
-  background: var(--pi-chat-gray-200);
-  color: var(--pi-chat-gray-900);
+  background: var(--pi-chat-line);
+  border-color: transparent;
+}
+
+.pi-chat-btn-danger {
+  border-color: rgba(163, 86, 74, 0.45);
+  color: var(--pi-chat-clay);
 }
 
 .pi-chat-btn-danger:hover {
-  background: var(--pi-chat-gray-900);
-  color: var(--pi-chat-white);
+  border-color: var(--pi-chat-clay);
+  background: rgba(163, 86, 74, 0.06);
+  color: var(--pi-chat-clay);
 }
 
 .pi-chat-btn-sm {
-  padding: var(--pi-chat-space-xs) var(--pi-chat-space-sm);
+  height: 26px;
+  padding: 0 10px;
   font-size: 11px;
 }
 
 .pi-chat-btn-icon {
-  padding: var(--pi-chat-space-xs);
-  min-width: 26px;
-  min-height: 26px;
+  width: 30px;
+  padding: 0;
 }
 
 .pi-chat-btn-icon-sm {
-  padding: var(--pi-chat-space-xs);
-  min-width: 22px;
-  min-height: 22px;
-  font-size: 13px;
+  width: 22px;
+  height: 22px;
 }
 
-.pi-chat-btn-icon-inline {
-  font-size: 14px;
+.pi-chat-btn-icon-sm svg {
+  width: 12px;
+  height: 12px;
+}
+
+.pi-chat-btn svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
 }
 
 .pi-chat-sr-only {
@@ -189,17 +251,7 @@
   border: 0;
 }
 
-.pi-chat-spin {
-  animation: pi-chat-spin 1s linear infinite;
-}
-
-@keyframes pi-chat-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ---- Message ---- */
+/* ---- 消息 ---- */
 
 .pi-chat-message {
   display: flex;
@@ -216,53 +268,63 @@
 .pi-chat-message-content {
   display: flex;
   flex-direction: column;
-  gap: var(--pi-chat-space-sm);
+  gap: 8px;
   max-width: 100%;
   min-width: 0;
 }
 
 .pi-chat-message-end .pi-chat-message-content {
   align-items: flex-end;
+  max-width: 82%;
 }
 
 .pi-chat-message-footer {
   display: flex;
-  gap: var(--pi-chat-space-xs);
+  gap: 2px;
 }
 
+/* 用户消息：墨色实底方框，与站点主按钮（site-cta）同语言。 */
 .pi-chat-bubble {
   display: inline-flex;
   max-width: 100%;
 }
 
 .pi-chat-bubble-muted .pi-chat-bubble-content {
-  background: var(--pi-chat-gray-900);
-  color: var(--pi-chat-white);
+  background: var(--pi-chat-ink);
+  color: var(--pi-chat-paper-2);
 }
 
 .pi-chat-bubble-content {
-  padding: var(--pi-chat-space-sm) var(--pi-chat-space-md);
+  padding: 7px 14px;
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-/* ---- Empty + suggestions ---- */
+/* ---- 空状态 ---- */
 
 .pi-chat-empty-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--pi-chat-space-lg);
-  max-width: 480px;
+  gap: 16px;
+  max-width: 460px;
   text-align: center;
 }
 
 .pi-chat-empty-header {
   display: flex;
   flex-direction: column;
-  gap: var(--pi-chat-space-sm);
+  gap: 8px;
+}
+
+.pi-chat-empty-eyebrow {
+  color: var(--pi-chat-ink-2);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .pi-chat-empty-title {
@@ -270,13 +332,16 @@
   font-family: var(--pi-chat-font-serif);
   font-size: 22px;
   font-weight: 600;
-  color: var(--pi-chat-black);
+  letter-spacing: -0.2px;
+  color: var(--pi-chat-ink);
 }
 
 .pi-chat-empty-desc {
+  max-width: 380px;
   margin: 0;
-  color: var(--pi-chat-gray-400);
+  color: var(--pi-chat-muted);
   font-size: 12px;
+  line-height: 1.7;
 }
 
 .pi-chat-empty-content {
@@ -287,51 +352,61 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--pi-chat-space-sm);
+  gap: 8px;
 }
 
-/* ---- Trace ---- */
+/* ---- Trace 步骤行 ---- */
 
 .pi-chat-trace {
   display: flex;
   flex-direction: column;
-  gap: var(--pi-chat-space-xs);
+  gap: 2px;
 }
 
 .pi-chat-trace-line {
   display: flex;
+  min-height: 24px;
   align-items: center;
-  gap: var(--pi-chat-space-sm);
-  padding: var(--pi-chat-space-xs) 0;
-  color: var(--pi-chat-gray-600);
+  gap: 8px;
+  color: var(--pi-chat-muted);
   font-size: 12px;
-}
-
-.pi-chat-trace-line-running .pi-chat-trace-icon,
-.pi-chat-trace-line-running .pi-chat-trace-title {
-  color: var(--pi-chat-gray-900);
-}
-
-.pi-chat-trace-line-error .pi-chat-trace-icon,
-.pi-chat-trace-line-error .pi-chat-trace-title {
-  color: var(--pi-chat-error);
 }
 
 .pi-chat-trace-icon {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  color: var(--pi-chat-gray-400);
-  font-size: 13px;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.pi-chat-trace-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .pi-chat-trace-title {
-  color: var(--pi-chat-gray-600);
+  color: var(--pi-chat-ink-2);
+  font-weight: 500;
 }
 
 .pi-chat-trace-desc {
   margin-left: auto;
-  color: var(--pi-chat-gray-400);
+  color: var(--pi-chat-muted);
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pi-chat-trace-line-running .pi-chat-trace-icon,
+.pi-chat-trace-line-running .pi-chat-trace-title {
+  color: var(--pi-chat-umber);
+}
+
+.pi-chat-trace-line-error .pi-chat-trace-icon,
+.pi-chat-trace-line-error .pi-chat-trace-title {
+  color: var(--pi-chat-clay);
 }
 
 .pi-chat-trace-collapsible-trigger {
@@ -344,36 +419,65 @@
   cursor: pointer;
 }
 
-.pi-chat-trace-collapsible-trigger:hover .pi-chat-trace-title {
-  color: var(--pi-chat-gray-900);
+/* 折叠箭头：与站点 reading-thinking 同款 ▸/▾。 */
+.pi-chat-trace-collapsible[data-open] > .pi-chat-trace-collapsible-trigger .pi-chat-trace-line::before {
+  content: '▾';
+  flex: none;
+  width: 10px;
+  color: var(--pi-chat-muted);
+  font-size: 10px;
 }
 
+.pi-chat-trace-collapsible:not([data-open]) > .pi-chat-trace-collapsible-trigger .pi-chat-trace-line::before {
+  content: '▸';
+  flex: none;
+  width: 10px;
+  color: var(--pi-chat-muted);
+  font-size: 10px;
+}
+
+.pi-chat-trace-collapsible-trigger:hover .pi-chat-trace-title,
+.pi-chat-trace-collapsible-trigger:hover .pi-chat-trace-icon {
+  color: var(--pi-chat-ink);
+}
+
+.pi-chat-trace-collapsible-trigger:hover .pi-chat-trace-line-running .pi-chat-trace-icon,
+.pi-chat-trace-collapsible-trigger:hover .pi-chat-trace-line-running .pi-chat-trace-title {
+  color: var(--pi-chat-umber);
+}
+
+/* 展开区：与站点 thinking 体一致的 2px 左 hairline。 */
 .pi-chat-trace-collapsible-content {
-  margin-left: var(--pi-chat-space-xs);
-  padding: var(--pi-chat-space-sm) 0 var(--pi-chat-space-sm) var(--pi-chat-space-lg);
-  border-left: 1px solid var(--pi-chat-gray-200);
+  margin: 2px 0 4px 6px;
+  padding: 4px 0 4px 14px;
+  border-left: 2px solid var(--pi-chat-line);
 }
 
 .pi-chat-trace-qa {
   display: flex;
   flex-direction: column;
-  gap: var(--pi-chat-space-sm);
+  gap: 6px;
 }
 
 .pi-chat-trace-qa dt {
-  color: var(--pi-chat-gray-600);
-  font-size: 12px;
+  color: var(--pi-chat-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .pi-chat-trace-qa dd {
-  margin: 0;
-  color: var(--pi-chat-gray-900);
+  margin: 1px 0 0;
+  color: var(--pi-chat-ink);
+  font-size: 12px;
 }
 
 .pi-chat-trace-reasoning {
-  color: var(--pi-chat-gray-600);
+  color: var(--pi-chat-ink-2);
   font-size: 12px;
+  line-height: 1.7;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .pi-chat-trace-source-link {
@@ -381,19 +485,24 @@
   text-decoration: none;
 }
 
-.pi-chat-trace-source-link:hover .pi-chat-trace-title {
-  color: var(--pi-chat-gray-900);
+.pi-chat-trace-source-link .pi-chat-trace-line {
+  min-height: 22px;
+}
+
+.pi-chat-trace-source-link:hover .pi-chat-trace-title,
+.pi-chat-trace-source-link:hover .pi-chat-trace-icon {
+  color: var(--pi-chat-sage);
 }
 
 .pi-chat-trace-error-block {
   max-height: 16rem;
 }
 
-/* ---- Code block ---- */
+/* ---- 代码块 ---- */
 
 .pi-chat-code-block {
-  border: 1px solid var(--pi-chat-gray-200);
-  background: var(--pi-chat-white);
+  border: 1px solid var(--pi-chat-line);
+  background: #ffffff;
 }
 
 .pi-chat-code-block-sm {
@@ -401,22 +510,24 @@
 }
 
 .pi-chat-code-block-destructive {
-  border-color: color-mix(in srgb, var(--pi-chat-error) 40%, transparent);
+  border-color: rgba(163, 86, 74, 0.45);
 }
 
 .pi-chat-code-block-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--pi-chat-space-xs) var(--pi-chat-space-sm);
-  border-bottom: 1px solid var(--pi-chat-gray-200);
+  padding: 3px 5px 3px 10px;
+  border-bottom: 1px solid var(--pi-chat-line);
+  background: var(--pi-chat-paper);
 }
 
 .pi-chat-code-block-title {
-  color: var(--pi-chat-gray-400);
-  font-size: 11px;
-  text-transform: lowercase;
-  letter-spacing: 0.5px;
+  color: var(--pi-chat-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .pi-chat-code-block-actions {
@@ -427,26 +538,32 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border: 0;
   background: none;
-  color: var(--pi-chat-gray-400);
-  font-size: 13px;
+  color: var(--pi-chat-muted);
   cursor: pointer;
 }
 
 .pi-chat-code-block-copy:hover {
-  color: var(--pi-chat-gray-900);
+  color: var(--pi-chat-ink);
+}
+
+.pi-chat-code-block-copy svg {
+  width: 12px;
+  height: 12px;
 }
 
 .pi-chat-code-block-content {
   margin: 0;
-  padding: var(--pi-chat-space-sm);
+  padding: 10px 12px;
   overflow-x: auto;
-  background: var(--pi-chat-white);
-  color: var(--pi-chat-gray-900);
+  background: #ffffff;
+  color: var(--pi-chat-ink);
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .pi-chat-code-block-wrap {
@@ -459,19 +576,19 @@
 }
 
 .pi-chat-markdown-code {
-  margin: var(--pi-chat-space-sm) 0;
+  margin: 10px 0;
 }
 
-/* ---- Markdown typeset ---- */
+/* ---- Markdown 排版 ---- */
 
 .pi-chat-typeset {
-  color: var(--pi-chat-gray-900);
+  color: var(--pi-chat-ink);
   font-size: 13px;
   line-height: 1.7;
 }
 
 .pi-chat-typeset > * + * {
-  margin-top: var(--pi-chat-space-sm);
+  margin-top: 10px;
 }
 
 .pi-chat-typeset h1,
@@ -483,37 +600,49 @@
   margin: 0;
   font-family: var(--pi-chat-font-serif);
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .pi-chat-typeset h1 {
-  font-size: 18px;
+  font-size: 17px;
+  letter-spacing: -0.2px;
 }
 
 .pi-chat-typeset h2 {
   font-size: 15px;
 }
 
-.pi-chat-typeset h3,
+.pi-chat-typeset h3 {
+  font-size: 13.5px;
+}
+
 .pi-chat-typeset h4,
 .pi-chat-typeset h5,
 .pi-chat-typeset h6 {
-  color: var(--pi-chat-gray-600);
+  color: var(--pi-chat-ink-2);
   font-size: 13px;
 }
 
 .pi-chat-typeset ul,
 .pi-chat-typeset ol {
-  padding-left: var(--pi-chat-space-lg);
+  padding-left: 18px;
+}
+
+.pi-chat-typeset li {
+  margin: 2px 0;
 }
 
 .pi-chat-typeset li > p {
   margin: 0;
 }
 
+.pi-chat-typeset li::marker {
+  color: var(--pi-chat-ink-2);
+}
+
 .pi-chat-typeset code {
-  padding: 1px 4px;
-  background: var(--pi-chat-gray-200);
+  padding: 1px 5px;
+  background: var(--pi-chat-line);
   font-size: 12px;
 }
 
@@ -521,23 +650,37 @@
   margin: 0;
 }
 
+.pi-chat-typeset pre code {
+  padding: 0;
+  background: none;
+}
+
 .pi-chat-typeset blockquote {
   margin: 0;
-  padding-left: var(--pi-chat-space-md);
-  border-left: 2px solid var(--pi-chat-gray-400);
-  color: var(--pi-chat-gray-600);
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid var(--pi-chat-line-strong);
+  color: var(--pi-chat-ink-2);
+}
+
+.pi-chat-typeset blockquote > * + * {
+  margin-top: 6px;
 }
 
 .pi-chat-typeset hr {
   height: 1px;
-  margin: var(--pi-chat-space-md) 0;
+  margin: 14px 0;
   border: 0;
-  background: var(--pi-chat-gray-200);
+  background: var(--pi-chat-line);
 }
 
 .pi-chat-typeset a {
-  color: var(--pi-chat-gray-900);
+  color: var(--pi-chat-sage);
   text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pi-chat-typeset a:hover {
+  color: var(--pi-chat-ink);
 }
 
 .pi-chat-typeset img {
@@ -547,67 +690,72 @@
 .pi-chat-typeset table {
   width: 100%;
   border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
 }
 
 .pi-chat-typeset th,
 .pi-chat-typeset td {
-  padding: var(--pi-chat-space-xs) var(--pi-chat-space-sm);
-  border: 1px solid var(--pi-chat-gray-200);
+  padding: 5px 10px;
+  border: 1px solid var(--pi-chat-line);
   text-align: left;
 }
 
 .pi-chat-typeset th {
-  font-family: var(--pi-chat-font-serif);
+  background: var(--pi-chat-paper);
+  color: var(--pi-chat-ink-2);
+  font-size: 11px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-/* ---- Alert ---- */
+/* ---- 提示条 ---- */
 
 .pi-chat-alert {
-  padding: var(--pi-chat-space-sm) var(--pi-chat-space-md);
-  border: 1px solid var(--pi-chat-gray-900);
-}
-
-.pi-chat-alert-destructive {
-  border-color: var(--pi-chat-error);
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(163, 86, 74, 0.45);
+  background: #ffffff;
 }
 
 .pi-chat-alert-title {
-  font-size: 12px;
+  color: var(--pi-chat-clay);
+  font-size: 11px;
   font-weight: 600;
-}
-
-.pi-chat-alert-destructive .pi-chat-alert-title {
-  color: var(--pi-chat-error);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .pi-chat-alert-desc {
-  color: var(--pi-chat-gray-600);
+  margin-top: 2px;
+  color: var(--pi-chat-ink-2);
   font-size: 12px;
+  line-height: 1.6;
 }
 
-/* ---- Composer ---- */
+/* ---- 输入区 ---- */
 
 .pi-chat-composer {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--pi-chat-gray-900);
-  background: var(--pi-chat-white);
+  border: 1px solid var(--pi-chat-line-strong);
+  background: #ffffff;
+  transition: border-color 0.12s ease;
 }
 
 .pi-chat-composer:focus-within {
-  border-color: var(--pi-chat-black);
+  border-color: var(--pi-chat-muted);
 }
 
 .pi-chat-composer-input {
   width: 100%;
-  min-height: 60px;
+  min-height: 64px;
   max-height: 200px;
-  padding: var(--pi-chat-space-md);
+  padding: 12px 14px;
   border: 0;
   background: none;
   resize: none;
-  color: var(--pi-chat-gray-900);
+  color: var(--pi-chat-ink);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -617,33 +765,32 @@
 }
 
 .pi-chat-composer-input::placeholder {
-  color: var(--pi-chat-gray-400);
+  color: var(--pi-chat-muted);
 }
 
 .pi-chat-composer-bar {
   display: flex;
   align-items: center;
-  gap: var(--pi-chat-space-sm);
-  padding: var(--pi-chat-space-xs) var(--pi-chat-space-sm);
-  border-top: 1px solid var(--pi-chat-gray-200);
+  gap: 8px;
+  padding: 5px 6px 5px 4px;
+  border-top: 1px solid var(--pi-chat-line);
 }
 
 .pi-chat-model-select {
-  padding: var(--pi-chat-space-xs) var(--pi-chat-space-sm);
-  border: 1px solid var(--pi-chat-gray-200);
-  background: var(--pi-chat-white);
-  color: var(--pi-chat-gray-600);
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--pi-chat-ink-2);
   font-size: 11px;
   cursor: pointer;
 }
 
 .pi-chat-model-select:hover {
-  border-color: var(--pi-chat-gray-400);
-  color: var(--pi-chat-gray-900);
+  background: var(--pi-chat-line);
+  color: var(--pi-chat-ink);
 }
 
 .pi-chat-model-select:focus {
-  border-color: var(--pi-chat-gray-900);
   outline: none;
 }
 
@@ -651,110 +798,139 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  min-height: 28px;
+  flex: none;
+  width: 30px;
+  height: 30px;
   margin-left: auto;
-  padding: var(--pi-chat-space-xs);
-  border: 1px solid var(--pi-chat-gray-900);
-  background: var(--pi-chat-gray-900);
-  color: var(--pi-chat-white);
-  font-size: 14px;
+  padding: 0;
+  border: 1px solid var(--pi-chat-sage-deep);
+  background: var(--pi-chat-sage-deep);
+  color: #ffffff;
   cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
 .pi-chat-composer-send:hover {
-  background: var(--pi-chat-black);
+  border-color: #41503b;
+  background: #41503b;
 }
 
 .pi-chat-composer-send:disabled {
-  opacity: 0.4;
+  border-color: var(--pi-chat-line-strong);
+  background: var(--pi-chat-paper);
+  color: var(--pi-chat-muted);
   cursor: default;
 }
 
 .pi-chat-composer-send:disabled:hover {
-  background: var(--pi-chat-gray-900);
+  border-color: var(--pi-chat-line-strong);
+  background: var(--pi-chat-paper);
 }
 
-/* ---- Question card ---- */
+.pi-chat-composer-send svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---- 问卷卡片 ---- */
 
 .pi-chat-question-card {
   flex: none;
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 0 var(--pi-chat-space-lg) var(--pi-chat-space-sm);
+  padding: 12px 22px 0;
 }
 
 .pi-chat-question-card-inner {
-  padding: var(--pi-chat-space-md);
-  border: 1px solid var(--pi-chat-gray-900);
-  background: var(--pi-chat-white);
+  padding: 14px 16px 12px;
+  border: 1px solid var(--pi-chat-line-strong);
+  background: var(--pi-chat-paper-2);
+}
+
+.pi-chat-question-card-eyebrow {
+  margin-bottom: 10px;
+  color: var(--pi-chat-umber);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .pi-chat-question-card-loading {
-  color: var(--pi-chat-gray-400);
+  color: var(--pi-chat-muted);
   font-size: 12px;
 }
 
-.pi-chat-question-item {
-  margin-bottom: var(--pi-chat-space-md);
+.pi-chat-question-item + .pi-chat-question-item {
+  margin-top: 12px;
 }
 
 .pi-chat-question-title {
-  margin-bottom: var(--pi-chat-space-sm);
+  margin-bottom: 6px;
   font-family: var(--pi-chat-font-serif);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--pi-chat-ink);
 }
 
 .pi-chat-question-choices {
   display: flex;
   flex-direction: column;
-  gap: var(--pi-chat-space-xs);
+  gap: 4px;
 }
 
 .pi-chat-question-choice {
   display: flex;
   align-items: center;
-  gap: var(--pi-chat-space-sm);
-  padding: var(--pi-chat-space-xs) var(--pi-chat-space-sm);
-  border: 1px solid var(--pi-chat-gray-200);
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--pi-chat-line);
+  background: #ffffff;
+  color: var(--pi-chat-ink-2);
   font-size: 12px;
   cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
 .pi-chat-question-choice:hover {
-  border-color: var(--pi-chat-gray-400);
+  background: var(--pi-chat-paper);
+  border-color: var(--pi-chat-line-strong);
 }
 
-.pi-chat-question-choice-selected {
-  border-color: var(--pi-chat-gray-900);
-  background: var(--pi-chat-gray-200);
+.pi-chat-question-choice-selected,
+.pi-chat-question-choice-selected:hover {
+  border-color: var(--pi-chat-sage);
+  background: var(--pi-chat-moss-bg);
+  color: var(--pi-chat-ink);
 }
 
 .pi-chat-question-choice input {
-  accent-color: var(--pi-chat-black);
+  margin: 0;
+  accent-color: var(--pi-chat-sage);
 }
 
+/* 自定义输入：虚线框，与站点 context 卡同语言。 */
 .pi-chat-question-input {
-  padding: var(--pi-chat-space-xs) var(--pi-chat-space-sm);
-  border: 1px solid var(--pi-chat-gray-200);
-  background: var(--pi-chat-white);
-  color: var(--pi-chat-gray-900);
+  padding: 5px 10px;
+  border: 1px dashed var(--pi-chat-line-strong);
+  background: #ffffff;
+  color: var(--pi-chat-ink);
   font-size: 12px;
 }
 
 .pi-chat-question-input:focus {
-  border-color: var(--pi-chat-gray-900);
+  border-style: solid;
+  border-color: var(--pi-chat-muted);
   outline: none;
 }
 
 .pi-chat-question-input::placeholder {
-  color: var(--pi-chat-gray-400);
+  color: var(--pi-chat-muted);
 }
 
 .pi-chat-question-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: var(--pi-chat-space-sm);
+  margin-top: 10px;
 }

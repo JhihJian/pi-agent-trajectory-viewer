@@ -14,6 +14,7 @@ import {
   Empty,
   EmptyContent,
   EmptyDescription,
+  EmptyEyebrow,
   EmptyHeader,
   EmptyTitle,
 } from './ui/Empty.jsx'
@@ -96,6 +97,7 @@ export function Chat({
         <div className="pi-chat-chat-empty">
           <Empty>
             <EmptyHeader>
+              <EmptyEyebrow>AI Chat</EmptyEyebrow>
               <EmptyTitle>{emptyTitle}</EmptyTitle>
               <EmptyDescription>{emptyDescription}</EmptyDescription>
             </EmptyHeader>

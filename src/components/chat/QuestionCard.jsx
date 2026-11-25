@@ -35,6 +35,7 @@ export function QuestionCard({ part, onAnswer }) {
               )
             }}
           >
+            <div className="pi-chat-question-card-eyebrow">Needs your input</div>
             {questions.map((question, index) => {
               const key = keyFor(index)
               const hasCustom = Boolean(custom[key]?.trim())
