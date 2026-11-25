@@ -23,3 +23,9 @@ export { DetailsSplit } from './DetailsSplit.jsx'
 export { Detail, TextOutput, Markdown, previewText, detailTabs, tabForKey, contentBlocks, embeddedImageSource, relatedRecords, usageOf, cumulativeUsage } from './Detail.jsx'
 export { JsonTree, CopyButton, copyText, jsonPath } from './JsonTree.jsx'
 export { Tooltip } from './Tooltip.jsx'
+export {
+  Chat, ChatMessage, MessageActions, MarkdownPre, ModelSelect, NewChatButton,
+  PromptForm, QuestionCard, StatusIcon, Suggestions, MockChatTransport,
+  useHighlightedCode, loadHighlighter, highlightCode, safeHttpUrl, toolPartByName,
+  TOOL_PART_COMPONENTS, MODELS,
+} from './chat/index.js'

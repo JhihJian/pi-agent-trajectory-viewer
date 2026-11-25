@@ -13,6 +13,7 @@ import { TrajectoryViewer } from '../components/TrajectoryViewer.jsx'
 import { TrajectoryTimeline } from '../components/TrajectoryTimeline.jsx'
 import { Tooltip } from '../components/Tooltip.jsx'
 import { WorkspaceDemo } from '../components/WorkspaceDemo.jsx'
+import { Chat } from '../components/chat/index.js'
 
 const sources = import.meta.glob('../components/*.jsx', { query: '?raw', import: 'default' })
 
@@ -41,6 +42,7 @@ const entries = [
   ['trajectory-toolbar', 'Trajectory Toolbar', 'View switch, duration, turn and call toggles plus search', 'trajectory', TrajectoryToolbar, 'TrajectoryToolbar', 'TrajectoryToolbar', 'timeline', 'leaf'],
   ['trajectory-timeline', 'Trajectory Timeline', 'Pointer-level timeline engine: drag, zoom, pan, range', 'trajectory', TrajectoryTimeline, 'TrajectoryTimeline', 'TrajectoryTimeline', 'timeline', 'leaf'],
   ['tooltip', 'Tooltip', 'Delayed fixed-position tooltip via portal', 'detail', Tooltip, 'Tooltip', 'Tooltip', 'json', 'leaf'],
+  ['ai-chat', 'AI Chat', 'Full AI SDK chat: markdown, tools, sources and question cards', 'detail', Chat, 'Chat', 'Chat', 'viewer', 'composite'],
 ]
 
 const searchAliases = {
@@ -58,6 +60,7 @@ const searchAliases = {
   'trajectory-toolbar': 'toolbar view switch duration turns calls toggles search field',
   'trajectory-timeline': 'timeline pointer engine drag zoom pan edge selection',
   tooltip: 'tooltip hint portal hover delay',
+  'ai-chat': 'ai chat assistant message stream tools reasoning sources question prompt composer markdown shiki',
 }
 
 export const catalog = entries.map(([slug, name, description, category, Component, exportName, filename, icon, kind]) => ({

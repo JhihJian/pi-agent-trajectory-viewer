@@ -11,6 +11,8 @@ import { TraceView } from '../components/TraceView.jsx'
 import { DiagnosticView } from '../components/DiagnosticView.jsx'
 import { SessionCatalog } from '../components/SessionCatalog.jsx'
 import { RulesEditor } from '../components/RulesEditor.jsx'
+import { Chat, MockChatTransport } from '../components/chat/index.js'
+import '../components/chat/chat.css'
 import { WorkspaceDemo } from '../components/WorkspaceDemo.jsx'
 import { Detail } from '../components/Detail.jsx'
 import { JsonTree } from '../components/JsonTree.jsx'
@@ -31,6 +33,7 @@ const registry = {
   'session-catalog': SessionCatalogDemo,
   'rules-editor': RulesEditorDemo,
   workspace: WorkspaceInstanceDemo,
+  'ai-chat': AiChatDemo,
 }
 
 function useParsed() {
@@ -80,6 +83,11 @@ function RulesEditorDemo() {
 
 function WorkspaceInstanceDemo() {
   return <div className="demo-workspace"><WorkspaceDemo /></div>
+}
+
+function AiChatDemo() {
+  const transport = useMemo(() => new MockChatTransport(), [])
+  return <div className="demo-chat"><Chat transport={transport} models={[{ id: 'demo/mock', name: 'Mock model' }]} emptyTitle="Try the mock chat" emptyDescription="Suggestions replay a scripted AI SDK message stream, including tools and a question card." /></div>
 }
 
 function ReadingViewDemo() {
