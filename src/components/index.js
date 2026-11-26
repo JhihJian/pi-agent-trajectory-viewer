@@ -20,7 +20,7 @@ export { SessionCatalog } from './SessionCatalog.jsx'
 export { RulesEditor } from './RulesEditor.jsx'
 export { WorkspaceDemo } from './WorkspaceDemo.jsx'
 export { DetailsSplit } from './DetailsSplit.jsx'
-export { Detail, TextOutput, Markdown, previewText, detailTabs, tabForKey, contentBlocks, embeddedImageSource, relatedRecords, usageOf, cumulativeUsage } from './Detail.jsx'
+export { Detail, TextOutput, Markdown, detailTabs, tabForKey, contentBlocks, embeddedImageSource, relatedRecords, usageOf, cumulativeUsage } from './Detail.jsx'
 export { JsonTree, CopyButton, copyText, jsonPath } from './JsonTree.jsx'
 export { Tooltip } from './Tooltip.jsx'
 export {

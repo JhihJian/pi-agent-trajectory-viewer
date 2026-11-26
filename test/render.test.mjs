@@ -44,8 +44,9 @@ test('renders continuous turn rows, search state, calls and timeline boundaries'
     }))
     assert.match(detail, /Arguments/)
     assert.match(detail, /Output · 1 lines/)
-    assert.match(detail, /Show full/)
-    assert.match(detail, /hidden from view/)
+    // 长输出不再截断成首尾两段：内容区自己滚动，说明行只报规模。
+    assert.doesNotMatch(detail, /Show full/)
+    assert.doesNotMatch(detail, /hidden from view/)
   } finally {
     await server.close()
   }

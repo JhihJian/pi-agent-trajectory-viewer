@@ -44,7 +44,6 @@
 
 /* 分区内的块统一到标题的 14px 基线 */
 .detail-record-content .detail-sections .detail-empty { margin: 6px 14px; }
-.detail-record-content .detail-sections .detail-json { margin: 0 14px; }
 .detail-record-content .detail-sections .detail-navigate { width: calc(100% - 28px); margin: 6px 14px; }
 
 /*
@@ -58,12 +57,43 @@
 .tool-status-error .tool-status-dot { background: var(--dsw-alias-state-error-primary); }
 .tool-status-missing { color: var(--dsw-alias-label-tertiary); }
 .tool-status-missing .tool-status-dot { background: var(--dsw-alias-label-tertiary); }
-.detail-empty { margin: 12px 18px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.6; }
+.detail-empty { margin: 12px 14px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.6; }
 .detail-text-output + .detail-text-output, .detail-json + .detail-text-output, .detail-text-output + .detail-json { margin-top: 12px; }
-.detail-text-output .long-output-toolbar { flex-wrap: wrap; }
-.detail-text-output .long-output-actions { flex-wrap: wrap; }
-.record-details .detail-text-output .long-output-content { margin: 0; border: 0; border-radius: 0; background: transparent; }
-.record-details .detail-text-output .detail-markdown { padding: 14px; }
+
+/* 一块正文的外框：说明行 + 内容区。整块收紧成一个盒子，内容区贴边 */
+.long-output,
+.detail-json { margin: 0; overflow: hidden; border: 1px solid var(--viewer-border, #e7e3dc); background: var(--white, #fff); }
+.long-output-toolbar { display: flex; min-height: 26px; align-items: center; justify-content: space-between; gap: 10px; padding: 0 13px; border-bottom: 1px solid var(--viewer-border, #e7e3dc); background: var(--viewer-surface, #f4f1ec); }
+/* 说明行只报规模：小一号、灰一档、等宽数字，右对齐更像注脚 */
+.long-output-meta { min-width: 0; overflow: hidden; color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 1.5; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.long-output-actions { display: flex; flex: none; align-items: center; gap: 3px; }
+
+/*
+ * 正文内容区。文字类输出与 JSON 树共用同一套度量：等宽、14px 内边距、
+ * 与说明行同一左基线、行高够松以便扫读长行；高度有上限，超出自己在块内滚动，
+ * 到底之后才把滚轮交给面板（overscroll-behavior: contain）。
+ */
+.long-output-content,
+.json-tree-content {
+  max-height: 420px;
+  margin: 0;
+  padding: 12px 13px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  color: var(--dsw-alias-label-primary);
+  background: transparent;
+  font: 12px/1.7 var(--ds-font-family-code, 'SF Mono', Menlo, Consolas, monospace);
+  tab-size: 2;
+  overflow-wrap: anywhere;
+}
+
+/* 文本按原样换行：长命令、长路径不再需要横向拖拽 */
+.long-output-content { white-space: pre-wrap; }
+
+.record-details .detail-text-output .detail-markdown { padding: 12px 14px; }
+.record-details .detail-text-output .detail-markdown > :first-child { margin-top: 0; }
+.record-details .detail-text-output .detail-markdown > :last-child { margin-bottom: 0; }
 .detail-thinking { margin: 8px 0 14px; }
 .detail-thinking-toggle { display: flex; align-items: center; gap: 8px; margin: 0 18px 8px; padding: 6px 0; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); font-size: 12px; }
 .detail-code-block { margin: 12px 0; overflow: hidden; border: 1px solid var(--viewer-border, #e7e3dc); background: var(--viewer-surface, #f4f1ec); }
@@ -79,21 +109,25 @@
 .detail-navigate:hover { background: var(--dsw-alias-interactive-bg-hover); }
 .detail-navigate span { color: var(--dsw-alias-label-tertiary); }
 .detail-navigate:disabled { cursor: default; }
-.detail-json { margin: 0 18px; overflow: hidden; border: 1px solid var(--viewer-border, #e7e3dc); background: var(--viewer-surface, #f4f1ec); }
-.json-tree-content { max-height: 640px; overflow: auto; padding: 10px; font: 12px/1.65 var(--ds-font-family-code, 'SF Mono', Menlo, Consolas, monospace); }
-.json-node-row { position: relative; min-height: 26px; padding: 2px 0; white-space: pre; }
+.json-node-row { position: relative; min-height: 20px; padding: 0; white-space: pre; }
+.json-node-row + .json-node-row { margin-top: 1px; }
 .detail-json[data-wrap='true'] .json-node-row { white-space: pre-wrap; overflow-wrap: anywhere; }
-.json-children { padding-left: 16px; border-left: 1px solid var(--viewer-border); }
-.json-toggle { width: 20px; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); }
+.json-children { padding-left: 12px; border-left: 1px solid var(--viewer-border, #e7e3dc); }
+.json-toggle { width: 16px; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 10px; cursor: pointer; }
+.json-toggle:hover { color: var(--dsw-alias-label-primary); }
 .json-summary { color: var(--dsw-alias-label-tertiary); }
 /* JSON 灰阶分级：键最深，字符串次之，数值再次，空值最浅。 */
 .json-key { color: var(--dsw-alias-label-primary); font-weight: 600; }
 .json-string { color: #5f7057; }
 .json-number, .json-boolean { color: #8a6f4d; }
 .json-null { color: #9c968c; font-style: italic; }
-.json-node-actions { display: inline-flex; flex-wrap: wrap; margin-left: 8px; opacity: 0; }
+.json-node-actions { display: inline-flex; flex-wrap: wrap; gap: 2px; margin-left: 8px; opacity: 0; }
 .json-node-row:hover > .json-node-actions, .json-node-row:focus-within > .json-node-actions { opacity: 1; }
 .json-node-actions .output-action { padding-inline: 4px; font-family: var(--dsw-font-family); }
+/* 通用的行内小按钮：正文区里剩下的可点元素（节点复制、JSON 展开）共用一种外观 */
+.output-action { display: inline-flex; min-height: 22px; align-items: center; gap: 5px; padding: 0 6px; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 11px; line-height: 1; cursor: pointer; }
+.output-action:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); }
+.output-action[aria-pressed='true'] { color: var(--dsw-alias-label-primary); }
 .json-node-actions svg { display: none; }
 @media (hover: none) { .json-node-actions { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .detail-record-content * { scroll-behavior: auto; } }

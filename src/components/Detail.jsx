@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
-import { Maximize2, Minimize2, WrapText, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { formatDuration } from '../lib/parser.js'
@@ -11,13 +11,6 @@ const kindLabel = { user: 'User', message: 'Assistant', tool: 'Tool', compacted:
 const kindClass = { user: tableCss.user, message: tableCss.assistantVioletBright, tool: tableCss.toolAmber, compacted: tableCss.compacted }
 const usageFields = [['input', 'Input'], ['output', 'Output'], ['think', 'Reasoning'], ['cacheRead', 'Cache read'], ['cacheWrite', 'Cache write'], ['totalTokens', 'Total tokens']]
 const formatChars = (value) => value < 1000 ? `${value} chars` : `${(value / 1000).toFixed(value < 10000 ? 1 : 0)}k chars`
-
-export function previewText(value, limit = 12000) {
-  if (value.length <= limit) return { text: value, hidden: 0 }
-  const head = Math.floor(limit * 0.66)
-  const hidden = value.length - limit
-  return { text: `${value.slice(0, head)}\n\n… ${formatChars(hidden)} hidden …\n\n${value.slice(-(limit - head))}`, hidden }
-}
 
 export function detailTabs(kind) {
   return kind === 'tool' ? ['overview', 'input', 'output', 'timing', 'raw'] : kind === 'compacted' ? ['overview', 'raw'] : ['overview', 'preview', 'raw']
@@ -32,21 +25,18 @@ export function tabForKey(tabs, current, key) {
   return null
 }
 
-export function TextOutput({ value = '', label, previewLimit = 12000, markdown = false }) {
-  const [expanded, setExpanded] = useState(false)
-  const [wrap, setWrap] = useState(false)
-  const [rendered, setRendered] = useState(markdown)
-  const preview = previewText(value, previewLimit)
-  const displayed = expanded ? value : preview.text
-  return <div className="long-output detail-text-output" data-wrap={String(wrap)}>
-    <div className="long-output-toolbar"><span className="long-output-meta">{label} · {value ? value.split('\n').length : 0} lines · {formatChars(value.length)}</span><div className="long-output-actions">
-      {markdown && <button type="button" className="output-action" aria-pressed={!rendered} onClick={() => setRendered(!rendered)}>{rendered ? 'Source' : 'Markdown'}</button>}
-      {(!markdown || !rendered) && <button type="button" className="output-action" onClick={() => setWrap(!wrap)} aria-pressed={wrap}><WrapText size={13} />{wrap ? 'Wrapped' : 'Wrap'}</button>}
-      <CopyButton value={value} title={`Copy ${label.toLowerCase()}`} />
-      {preview.hidden > 0 && <button type="button" className="output-action output-action-primary" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}{expanded ? 'Collapse' : 'Show full'}</button>}
-    </div></div>
-    {rendered ? <Markdown value={displayed} /> : <pre className="long-output-content">{displayed || '∅ Empty output'}</pre>}
-    {preview.hidden > 0 && !expanded && <div className="long-output-note">Showing the beginning and end. {formatChars(preview.hidden)} hidden from view.</div>}
+/**
+ * 一段记录正文：一行说明文字 + 内容区。
+ *
+ * 工具栏上不再放任何按钮。Wrap、Source/Markdown 与 Show full 三个开关都是围绕
+ * 同一块内容的显示开关，收起状态又让人看不出内容被截断，读者得先点一下才知道
+ * 眼前不是全部。现在内容一次给定：文本按原样换行显示，Markdown 直接渲染成
+ * Markdown，长内容由内容区自己滚动，说明行只报规模。
+ */
+export function TextOutput({ value = '', label, markdown = false }) {
+  return <div className="long-output detail-text-output">
+    <div className="long-output-toolbar"><span className="long-output-meta">{label} · {value ? value.split('\n').length : 0} lines · {formatChars(value.length)}</span></div>
+    {markdown ? <Markdown value={value} /> : <pre className="long-output-content">{value || '∅ Empty output'}</pre>}
   </div>
 }
 
@@ -217,6 +207,7 @@ export function Detail({ cell, onClose, onNavigate, records = [] }) {
           <dl className={`${tableCss.overview} detail-metadata`}><div><dt>Record</dt><dd>{cell.recordId || '—'}</dd></div><div><dt>Time</dt><Timestamp value={cell.startedAt} /></div><div><dt>Duration</dt><dd>{formatDuration(cell.timeSeconds)}</dd></div>{cell.callId && <div><dt>Call ID</dt><dd>{cell.callId}</dd></div>}{cell.toolName && <div><dt>Tool</dt><dd>{cell.toolName}</dd></div>}{cell.raw?.message?.model && <div><dt>Model</dt><dd>{cell.raw.message.model}</dd></div>}</dl>
           <div className={`${tableCss.overviewSections} detail-sections`}>
             {cell.kind === 'tool' ? <><div className={`tool-status tool-status-${cell.isError ? 'error' : hasResult ? 'complete' : 'missing'}`}><span className="tool-status-dot" />{cell.isError ? 'Error' : hasResult ? 'Result recorded' : 'No result recorded'}</div><Section title="Arguments">{toolInput}</Section><Section title="Output">{toolOutput}</Section></> : <Section title={cell.kind === 'compacted' ? 'Summary' : cell.kind === 'user' ? 'Input' : 'Output'}>{content}</Section>}
+            <Navigation cell={cell} records={records} onNavigate={onNavigate} />
             {(cell.kind === 'message' || Object.keys(usageOf(cell)).length > 0) && <Section title="Usage"><Usage cell={cell} records={records} /></Section>}
           </div>
         </>}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Copy, WrapText } from 'lucide-react'
+import { Copy } from 'lucide-react'
 import './styles/detail.css'
 
 export async function copyText(value) {
@@ -67,10 +67,13 @@ function JsonNode({ value, name, path, depth }) {
   </div>
 }
 
+/**
+ * JSON 树。工具栏只留说明文字，不再有 Wrap / Copy JSON 这类开关：
+ * 长值一律换行显示，复制按节点进行（每个节点悬停给出 Value / Path / JSON）。
+ */
 export function JsonTree({ value, label = 'JSON' }) {
-  const [wrap, setWrap] = useState(true)
-  return <div className="detail-json" data-wrap={String(wrap)} role="group" aria-label={label}>
-    <div className="long-output-toolbar"><span className="long-output-meta">{label}</span><div className="long-output-actions"><button type="button" className="output-action" onClick={() => setWrap(!wrap)} aria-pressed={wrap}><WrapText size={13} />{wrap ? 'Wrapped' : 'Wrap'}</button><CopyButton value={jsonText(value)} label="Copy JSON" title={`Copy ${label}`} /></div></div>
+  return <div className="detail-json" data-wrap="true" role="group" aria-label={label}>
+    <div className="long-output-toolbar"><span className="long-output-meta">{label}</span></div>
     <div className="json-tree-content"><JsonNode value={value} path="$" depth={0} /></div>
   </div>
 }
