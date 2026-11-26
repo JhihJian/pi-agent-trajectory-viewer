@@ -42,7 +42,7 @@
 
 ## 集成点
 
-- `TrajectoryViewer` 新增 `view` 状态（Ledger / Reading / Trace / Diagnostic），`rows` + `diagnostics` 可选 props 启用诊断视图。
+- `TrajectoryViewer` 新增 `view` 状态（Reading / Ledger / Trace / Diagnostic，按此顺序排列，默认 Reading），`rows` + `diagnostics` 可选 props 启用诊断视图。
 - 共享详情分栏：`src/components/DetailsSplit.jsx`（与 `TrajectoryTable` 相同的可拖拽 Detail 面板）。
 - 样式：`src/components/styles/views.css`，沿用 `--viewer-*` / `--dsw-alias-*` 令牌（带回退值）。
 - 演示站：`catalog.js` 三个新条目 + `ComponentDemo.jsx` 注册；样例 fixture 扩展了 skill/subagent/compaction 行。
