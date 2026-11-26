@@ -18,9 +18,10 @@ const storeDuration = value => {
   try { localStorage.setItem('pi-trajectory-duration', String(value)) } catch { /* Storage may be disabled. */ }
 }
 
-const baseViews = ['ledger', 'reading', 'trace']
+/** 视图的排列顺序即工具栏的按钮顺序：阅读优先，其次是记录表与执行树。 */
+const baseViews = ['reading', 'ledger', 'trace']
 
-export function TrajectoryViewer({ turns, rows, diagnostics = [], sessionRevision = 0, defaultDuration, defaultView = 'ledger', defaultQuery = '', rules, onSelectionChange, className = '' }) {
+export function TrajectoryViewer({ turns, rows, diagnostics = [], sessionRevision = 0, defaultDuration, defaultView = 'reading', defaultQuery = '', rules, onSelectionChange, className = '' }) {
   const [selected, setSelected] = useState(null)
   const [query, setQuery] = useState(defaultQuery)
   const [actualDuration, setActualDuration] = useState(defaultDuration ?? readStoredDuration)
@@ -30,7 +31,7 @@ export function TrajectoryViewer({ turns, rows, diagnostics = [], sessionRevisio
   const [focusRequest, setFocusRequest] = useState(null)
   const [view, setView] = useState(defaultView)
   const views = useMemo(() => rows ? [...baseViews, 'diagnostic'] : baseViews, [rows])
-  const activeView = views.includes(view) ? view : 'ledger'
+  const activeView = views.includes(view) ? view : 'reading'
   const sessionHeader = useMemo(() => { const header = rows?.find((row) => row.type === 'session'); return { id: header?.id, cwd: header?.cwd } }, [rows])
   const records = useMemo(() => flattenTurns(turns), [turns])
   const targets = useMemo(() => foldTargets(records), [records])

@@ -4,7 +4,7 @@ import toolbarCss from './reference/TrajectoryToolbar.module.css'
 
 const viewLabels = { ledger: 'Ledger', reading: 'Reading', trace: 'Trace', diagnostic: 'Diagnostic' }
 
-export function TrajectoryToolbar({ query, setQuery, actualDuration, setActualDuration, allTurnsCollapsed, onToggleTurns, allAssistantsCollapsed, onToggleAssistants, view = 'ledger', setView, views = ['ledger'], showModes = true }) {
+export function TrajectoryToolbar({ query, setQuery, actualDuration, setActualDuration, allTurnsCollapsed, onToggleTurns, allAssistantsCollapsed, onToggleAssistants, view = 'reading', setView, views = ['reading'], showModes = true }) {
   return <div className={`${toolbarCss.root} viewer-toolbar`} role="toolbar" aria-label="Trajectory toolbar">
     <div className={toolbarCss.inner}>
       <div className={`${toolbarCss.actions} trajectory-controls`}>

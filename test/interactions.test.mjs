@@ -36,9 +36,14 @@ test('full application timeline, ledger, detail and responsive interactions', { 
   page.on('pageerror', error => errors.push(error.message))
   const screenshots = '.pi/acceptance'
   await mkdir(screenshots, { recursive: true })
+  // 默认视图是 Reading；这套用例验证的是记录表与时间线，加载后统一切到 Ledger。
+  const toLedger = async () => {
+    await page.getByRole('button', { name: 'Ledger view' }).click()
+    await page.locator('.record-table [data-kind]').first().waitFor()
+  }
   const load = async (count = 40, timed = true) => {
     await page.locator('input[type=file]').setInputFiles(fixture(count, timed))
-    await page.locator('.record-table [data-kind]').first().waitFor()
+    await toLedger()
     if (await page.getByLabel('Use recorded duration').getAttribute('aria-pressed') === 'true') await page.getByLabel('Use recorded duration').click()
   }
   const track = page.locator('.timeline-track')
@@ -182,6 +187,7 @@ test('full application timeline, ledger, detail and responsive interactions', { 
       assert.equal(await track.innerText(), 'No timing data')
       await page.reload()
       await page.locator('input[type=file]').setInputFiles(fixture(40))
+      await toLedger()
       assert.equal(await page.getByLabel('Use recorded duration').getAttribute('aria-pressed'), 'true')
       await page.getByLabel('Use recorded duration').click()
       await drag(.1, .4)
@@ -195,6 +201,7 @@ test('full application timeline, ledger, detail and responsive interactions', { 
       const zero = fixture(3)
       zero.buffer = Buffer.from(zero.buffer.toString().replace(/2023-[^"]+/g, '2023-11-14T22:13:20.000Z'))
       await page.locator('input[type=file]').setInputFiles(zero)
+      await toLedger()
       await page.getByLabel('Use recorded duration').click()
       await page.getByText('No elapsed duration · showing record order').waitFor()
       assert.deepEqual(await domain(), [0, 9])
