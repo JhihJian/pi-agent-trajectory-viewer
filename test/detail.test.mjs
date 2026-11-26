@@ -31,7 +31,8 @@ test('tool overview shows the full output with only a meta line above it', () =>
   assert.match(html, /head/)
   assert.match(html, /tail/)
   assert.match(html, /Arguments/)
-  assert.match(html, /Copy JSON/)
+  // JSON 树里没有任何按钮，Arguments 只有说明行与只读的树。
+  assert.doesNotMatch(html, /Copy JSON/)
   assert.match(html, /Parent assistant/)
   assert.match(html, /role="tab"[^>]*>Timing/)
 })
@@ -69,15 +70,18 @@ test('source blocks decode Pi image payloads and retain missing-reference explan
   assert.doesNotMatch(render({ kind: 'message', outputDetail: '![remote](https://example.com/image.png)' }), /<img/)
 })
 
-test('JSON paths escape keys and tree exposes copy operations without expanding nested objects', () => {
+test('JSON paths escape keys, and the tree is a button-free read-only view', () => {
   assert.equal(tree.jsonPath('$', 'a.b'), '$["a.b"]')
   assert.equal(tree.jsonPath('$.items', '0', true), '$.items[0]')
   const html = renderToStaticMarkup(React.createElement(tree.JsonTree, { value: { 'a.b': { secret: 'nested' }, zero: 0, empty: null, long: 'x'.repeat(1800) } }))
-  assert.match(html, /Copy value at/)
-  assert.match(html, /Copy path/)
-  assert.match(html, /Show full string/)
+  // 树上没有任何按钮：没有折叠箭头、没有逐节点复制、没有展开全部。
+  assert.doesNotMatch(html, /<button/)
+  assert.doesNotMatch(html, /Copy value at/)
+  assert.doesNotMatch(html, /Show full string/)
   assert.match(html, /data-wrap="true"/)
-  assert.doesNotMatch(html, /nested/)
+  // 嵌套对象一次展开到底，长字符串原样给出。
+  assert.match(html, /nested/)
+  assert.match(html, new RegExp('x'.repeat(1800)))
 })
 
 test('tabs match record kinds, navigate with arrows, and wrap at either end', () => {
@@ -201,13 +205,10 @@ test('browser interactions preserve tabs, copy exact values, navigate and reveal
     assert.equal(await evaluate('document.querySelector(".long-output-content").textContent'), tool.outputDetail)
     await renderCell({ ...tool, recordId: 't2', outputDetail: '{"a.b":{"items":[0,false]},"long":"hello"}' })
     assert.equal(await selectedTab(), 'Output')
-    await click('[aria-label=\'Expand $["a.b"]\']')
-    await click('[aria-label=\'Copy path $["a.b"]\']')
-    assert.equal(await evaluate('window.copied.at(-1)'), '$["a.b"]')
-    await click('[aria-label=\'Copy value at $.long\']')
-    assert.equal(await evaluate('window.copied.at(-1)'), 'hello')
-    await click('[aria-label=\'Copy JSON at $["a.b"]\']')
-    assert.equal(await evaluate('window.copied.at(-1)'), JSON.stringify({ items: [0, false] }, null, 2))
+    // JSON 树里没有按钮，嵌套对象直接展开呈现。
+    assert.equal(await evaluate('document.querySelectorAll(".detail-json button").length'), 0)
+    assert.match(await evaluate('document.querySelector(".json-tree-content").textContent'), /items/)
+    assert.match(await evaluate('document.querySelector(".json-tree-content").textContent'), /hello/)
     await renderCell(assistant)
     assert.equal(await selectedTab(), 'Overview')
     await renderCell({ kind: 'tool', recordId: 'no-time', text: 'read', raw: {} })

@@ -113,21 +113,14 @@
 .json-node-row + .json-node-row { margin-top: 1px; }
 .detail-json[data-wrap='true'] .json-node-row { white-space: pre-wrap; overflow-wrap: anywhere; }
 .json-children { padding-left: 12px; border-left: 1px solid var(--viewer-border, #e7e3dc); }
-.json-toggle { width: 16px; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 10px; cursor: pointer; }
-.json-toggle:hover { color: var(--dsw-alias-label-primary); }
 .json-summary { color: var(--dsw-alias-label-tertiary); }
 /* JSON 灰阶分级：键最深，字符串次之，数值再次，空值最浅。 */
 .json-key { color: var(--dsw-alias-label-primary); font-weight: 600; }
 .json-string { color: #5f7057; }
 .json-number, .json-boolean { color: #8a6f4d; }
 .json-null { color: #9c968c; font-style: italic; }
-.json-node-actions { display: inline-flex; flex-wrap: wrap; gap: 2px; margin-left: 8px; opacity: 0; }
-.json-node-row:hover > .json-node-actions, .json-node-row:focus-within > .json-node-actions { opacity: 1; }
-.json-node-actions .output-action { padding-inline: 4px; font-family: var(--dsw-font-family); }
 /* 通用的行内小按钮：正文区里剩下的可点元素（节点复制、JSON 展开）共用一种外观 */
 .output-action { display: inline-flex; min-height: 22px; align-items: center; gap: 5px; padding: 0 6px; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 11px; line-height: 1; cursor: pointer; }
 .output-action:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); }
 .output-action[aria-pressed='true'] { color: var(--dsw-alias-label-primary); }
-.json-node-actions svg { display: none; }
-@media (hover: none) { .json-node-actions { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .detail-record-content * { scroll-behavior: auto; } }

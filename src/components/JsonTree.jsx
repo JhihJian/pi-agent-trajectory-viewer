@@ -42,34 +42,26 @@ function jsonText(value, pretty = true) {
   return JSON.stringify(value, null, pretty ? 2 : undefined) ?? 'undefined'
 }
 
+/**
+ * 一个 JSON 节点。整棵树是只读展示：没有折叠箭头、没有复制按钮、没有「展开
+ * 全部」。嵌套结构一次展开到底，长字符串按原样给出，读的是数据本身，不需要
+ * 在树上点来点去。内容区自己有高度上限，长内容在块内滚动。
+ */
 function JsonNode({ value, name, path, depth }) {
-  const [open, setOpen] = useState(depth === 0)
-  const [full, setFull] = useState(false)
-  const [all, setAll] = useState(false)
   const branch = value !== null && typeof value === 'object'
   const entries = branch ? Object.entries(value) : []
   const text = typeof value === 'string' ? value : jsonText(value)
-  const long = !branch && text.length > 1500
-  const shown = long && !full ? `${text.slice(0, 1000)} … ${text.length - 1500} chars hidden … ${text.slice(-500)}` : text
   return <div className="json-node" data-json-path={path}>
     <div className="json-node-row">
-      {branch && <button type="button" className="json-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={`${open ? 'Collapse' : 'Expand'} ${path}`}>{open ? '▾' : '▸'}</button>}
       {name !== undefined && <span className="json-key">{JSON.stringify(name)}: </span>}
-      {branch ? <span className="json-summary">{Array.isArray(value) ? `[${entries.length} items]` : `{${entries.length} keys}`}</span> : <span className={`json-value json-${value === null ? 'null' : typeof value}`}>{typeof value === 'string' ? `"${shown}"` : shown}</span>}
-      {long && <button type="button" className="output-action" aria-expanded={full} onClick={() => setFull(!full)}>{full ? 'Collapse string' : 'Show full string'}</button>}
-      <span className="json-node-actions">
-        <CopyButton value={typeof value === 'string' ? value : jsonText(value, false)} label="Value" title={`Copy value at ${path}`} />
-        <CopyButton value={path} label="Path" title={`Copy path ${path}`} />
-        <CopyButton value={jsonText(value)} label="JSON" title={`Copy JSON at ${path}`} />
-      </span>
+      {branch ? <span className="json-summary">{Array.isArray(value) ? `[${entries.length} items]` : `{${entries.length} keys}`}</span> : <span className={`json-value json-${value === null ? 'null' : typeof value}`}>{typeof value === 'string' ? `"${text}"` : text}</span>}
     </div>
-    {branch && open && <div className="json-children">{(all ? entries : entries.slice(0, 100)).map(([key, child]) => <JsonNode key={key} name={key} value={child} depth={depth + 1} path={jsonPath(path, key, Array.isArray(value))} />)}{entries.length > 100 && <button type="button" className="output-action" onClick={() => setAll(!all)}>{all ? 'Show first 100' : `Show all ${entries.length} items`}</button>}</div>}
+    {branch && <div className="json-children">{entries.map(([key, child]) => <JsonNode key={key} name={key} value={child} depth={depth + 1} path={jsonPath(path, key, Array.isArray(value))} />)}</div>}
   </div>
 }
 
 /**
- * JSON 树。工具栏只留说明文字，不再有 Wrap / Copy JSON 这类开关：
- * 长值一律换行显示，复制按节点进行（每个节点悬停给出 Value / Path / JSON）。
+ * JSON 树。工具栏只留说明文字，树里没有任何按钮。
  */
 export function JsonTree({ value, label = 'JSON' }) {
   return <div className="detail-json" data-wrap="true" role="group" aria-label={label}>
