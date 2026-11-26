@@ -68,3 +68,16 @@ test('the trace filter keeps turns with matching items and empty query is identi
   assert.deepEqual(filterTraceTurns(traceTurns, 'nothing'), [])
   assert.equal(filterTraceTurns(traceTurns, ''), traceTurns)
 })
+
+test('a tool-only assistant step carries the tool count for its summary', () => {
+  const { turns } = parse([
+    { type: 'message', id: 'u1', parentId: 's', message: { role: 'user', content: [{ type: 'text', text: 'go' }] } },
+    { type: 'message', id: 'a1', parentId: 'u1', message: { role: 'assistant', content: [{ type: 'toolCall', id: 'c1', name: 'read', arguments: { path: 'a.js' } }, { type: 'toolCall', id: 'c2', name: 'bash', arguments: { command: 'ls' } }] } },
+    { type: 'message', id: 'r1', parentId: 'a1', message: { role: 'toolResult', toolCallId: 'c1', toolName: 'read', content: [{ type: 'text', text: 'a' }] } },
+    { type: 'message', id: 'r2', parentId: 'r1', message: { role: 'toolResult', toolCallId: 'c2', toolName: 'bash', content: [{ type: 'text', text: 'b' }] } },
+    { type: 'message', id: 'a2', parentId: 'r2', message: { role: 'assistant', content: [{ type: 'text', text: 'done' }] } },
+  ])
+  const [traceTurn] = projectTraceTurns(turns)
+  const assistants = traceTurn.items.filter((item) => item.kind === 'assistant')
+  assert.deepEqual(assistants.map((item) => [item.text, item.toolCount]), [['', 2], ['done', 0]])
+})

@@ -103,3 +103,35 @@ test('the outline directory projects turn titles, context entries and subagent c
   assert.equal(entry.context[1].label, 'Compaction · 48200 tokens')
   assert.equal(projectReadingOutline([]).turns.length, 0)
 })
+
+test('an assistant message that only calls tools reports its tool count, not an empty record', () => {
+  const { turns } = parse([
+    { type: 'message', id: 'u1', parentId: 's', message: { role: 'user', content: [{ type: 'text', text: 'Inspect the repo' }] } },
+    { type: 'message', id: 'a1', parentId: 'u1', message: { role: 'assistant', content: [{ type: 'toolCall', id: 'c1', name: 'read', arguments: { path: 'a.js' } }, { type: 'toolCall', id: 'c2', name: 'bash', arguments: { command: 'ls' } }] } },
+    { type: 'message', id: 'r1', parentId: 'a1', message: { role: 'toolResult', toolCallId: 'c1', toolName: 'read', content: [{ type: 'text', text: 'a' }] } },
+    { type: 'message', id: 'r2', parentId: 'r1', message: { role: 'toolResult', toolCallId: 'c2', toolName: 'bash', content: [{ type: 'text', text: 'b' }] } },
+  ])
+  const [readingTurn] = projectReadingTurns(turns)
+  const assistant = readingTurn.cards.find((card) => card.kind === 'assistant')
+  assert.equal(assistant.text, '')
+  assert.equal(assistant.toolCount, 2)
+  // 同一步的工具卡各算一次，不含上一步的
+  assert.equal(readingTurn.cards.filter((card) => card.kind === 'tool').length, 2)
+})
+
+test('tool counts stay per step, and a message with text keeps its text', () => {
+  const { turns } = parse([
+    { type: 'message', id: 'u1', parentId: 's', message: { role: 'user', content: [{ type: 'text', text: 'go' }] } },
+    { type: 'message', id: 'a1', parentId: 'u1', message: { role: 'assistant', content: [{ type: 'toolCall', id: 'c1', name: 'read', arguments: { path: 'a.js' } }] } },
+    { type: 'message', id: 'r1', parentId: 'a1', message: { role: 'toolResult', toolCallId: 'c1', toolName: 'read', content: [{ type: 'text', text: 'a' }] } },
+    { type: 'message', id: 'a2', parentId: 'r1', message: { role: 'assistant', content: [{ type: 'text', text: 'Found it' }] } },
+    { type: 'message', id: 'a3', parentId: 'a2', message: { role: 'assistant', content: [{ type: 'text', text: 'Now editing' }, { type: 'toolCall', id: 'c2', name: 'edit', arguments: { path: 'a.js' } }] } },
+  ])
+  const [readingTurn] = projectReadingTurns(turns)
+  const assistants = readingTurn.cards.filter((card) => card.kind === 'assistant')
+  assert.deepEqual(assistants.map((card) => [card.text, card.toolCount]), [
+    ['', 1],
+    ['Found it', 0],
+    ['Now editing', 1],
+  ])
+})

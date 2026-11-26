@@ -6,8 +6,8 @@
 
 | codex-session-renderer | 本项目 | 说明 |
 | --- | --- | --- |
-| 正文视图 `detail.compact`（`src/session-compact-reading-projection.mjs`, `public/views/compact-*.js`） | `src/lib/reading-view.js` + `src/components/ReadingView.jsx` | 轮次化阅读流。Skill 指令块、goal 控制消息、压缩事件投影为上下文卡片；工具调用保留为一行卡片（源实现正文不显示普通工具调用，本项目保留以维持组件独立性）；subagent 批次带覆盖率。 |
-| 执行视图 `detail.trace`（`src/core/trace-model.mjs`, `public/views/trace*.js`） | `src/lib/trace-view.js` + `src/components/TraceView.jsx` | 执行树：turn → user/step/tool/context 节点，工具节点走摘要规则，可复制执行报告。 |
+| 正文视图 `detail.compact`（`src/session-compact-reading-projection.mjs`, `public/views/compact-*.js`） | `src/lib/reading-view.js` + `src/components/ReadingView.jsx` | 轮次化阅读流。Skill 指令块、goal 控制消息、压缩事件投影为上下文卡片；工具调用保留为一行卡片（源实现正文不显示普通工具调用，本项目保留以维持组件独立性）；subagent 批次带覆盖率。助手消息只有工具调用、没有文本时，卡片正文说明本条调用了几个工具，而不是报「没有文本」——这是 pi 里最常见的 assistant 形态，细节由同一步的工具卡展示。 |
+| 执行视图 `detail.trace`（`src/core/trace-model.mjs`, `public/views/trace*.js`） | `src/lib/trace-view.js` + `src/components/TraceView.jsx` | 执行树：turn → user/step/tool/context 节点，工具节点走摘要规则，可复制执行报告。助手节点摘要按「文本 → 本步工具调用数 → Thinking → 未记录文本」的顺序回退，与阅读视图一致。 |
 | 执行文本导出 `src/session-execution-export-projection.mjs` | `trace-view.js::executionReport` | 供其他 agent 排查的纯文本报告；未记录的事实保持未记录。 |
 | 诊断视图 `public/controllers/diagnostic.js` + `jsonl_parse_error` 事件 | `src/components/DiagnosticView.jsx` + `parser.js` 诊断 | 原始行 + 解析失败诊断。坏行不再中断解析（有 session 头时）；无 session 头时保持原报错信息。 |
 | 正文视图（左栏）阅读视图层级目录 `public/controllers/compact-outline.js` + 轮次时间轴 `renderCompactTimelineEntry` | `src/components/ReadingOutline.jsx` + `reading-view.js::projectReadingOutline` | ReadingView 左侧 sticky 目录：根会话 → 轮次（标题 + 状态点 + 压缩/子代理徽标）→ 嵌套上下文事件；点击滚动跳转 + 闪烁高亮 + 滚动联动（时间戳节流）；省略源实现的嵌套子代理会话层。 |

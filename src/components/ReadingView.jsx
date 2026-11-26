@@ -33,11 +33,23 @@ function UserCard({ card, anchor }) {
   </section>
 }
 
+/**
+ * 助手消息的正文。一条 assistant 消息常常只有工具调用、没有文字，这不是坏记录：
+ * 把这种情况说成「没有文本」会让人以为数据丢了。只有工具调用时改为说明调了几个，
+ * 细节由紧跟其后的工具卡展示；真正的空消息仍然明确标出来。
+ */
+function assistantBodyNote(card) {
+  if (card.toolCount > 0) return `Called ${card.toolCount} tool${card.toolCount === 1 ? '' : 's'}`
+  return '(no text recorded)'
+}
+
 function AssistantCard({ card, anchor }) {
   return <section className="reading-card" data-role="assistant" role="listitem" id={anchor} data-record-id={card.cell.recordId}>
     <div className="reading-card-label"><span className="reading-card-role">Assistant</span><Usage usage={card.usage} />{Number.isFinite(card.cell.timeSeconds) && <em>{formatDuration(card.cell.timeSeconds)}</em>}<em>{formatTime(card.cell.startedAt)}</em></div>
     <Thinking value={card.thinking} />
-    <div className="reading-body"><Markdown value={card.text || '(no text recorded)'} /></div>
+    {card.text
+      ? <div className="reading-body"><Markdown value={card.text} /></div>
+      : <p className="reading-empty-note" title={card.toolCount > 0 ? 'This message carried tool calls instead of text' : 'The recorded message has no text content'}>{assistantBodyNote(card)}</p>}
   </section>
 }
 

@@ -20,6 +20,9 @@ export function projectReadingTurns(turns, options = {}) {
 function readingCards(turn, options = {}) {
   const cards = []
   for (const group of turn.groups) {
+    // 一条 assistant 消息和它的工具调用在同一个 group 里。先数出这一组有几个
+    // 工具调用，助手卡才知道自己这一步是「只调工具、没有文本」还是真的空记录。
+    const toolCount = group.cells.filter((cell) => cell.kind === 'tool').length
     for (const cell of group.cells) {
       if (cell.kind === 'user') {
         const skill = parsePiSkillInstruction(cell.text === '(empty)' ? '' : cell.text)
@@ -34,7 +37,7 @@ function readingCards(turn, options = {}) {
         continue
       }
       if (cell.kind === 'message') {
-        cards.push({ kind: 'assistant', cell, text: cell.outputDetail || '', thinking: cell.thinkingDetail || '', usage: usageOf(cell) })
+        cards.push({ kind: 'assistant', cell, text: cell.outputDetail || '', thinking: cell.thinkingDetail || '', usage: usageOf(cell), toolCount })
         continue
       }
       if (cell.kind === 'tool') {

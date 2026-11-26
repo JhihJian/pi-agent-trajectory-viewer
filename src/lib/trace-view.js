@@ -30,6 +30,8 @@ function traceItems(turn, options = {}) {
   const items = []
   let step = 0
   for (const group of turn.groups) {
+    // 同组工具调用数：助手节点据此说明这一步是只调工具，而不是没有记录。
+    const toolCount = group.cells.filter((cell) => cell.kind === 'tool').length
     for (const cell of group.cells) {
       if (cell.kind === 'user') {
         const skill = parsePiSkillInstruction(cell.text === '(empty)' ? '' : cell.text)
@@ -38,7 +40,7 @@ function traceItems(turn, options = {}) {
       }
       if (cell.kind === 'message') {
         step += 1
-        items.push({ kind: 'assistant', cell, step, text: cell.outputDetail || '', thinking: cell.thinkingDetail || '', usage: usageOf(cell), durationSeconds: cell.timeSeconds })
+        items.push({ kind: 'assistant', cell, step, text: cell.outputDetail || '', thinking: cell.thinkingDetail || '', usage: usageOf(cell), toolCount, durationSeconds: cell.timeSeconds })
         continue
       }
       if (cell.kind === 'tool') {
