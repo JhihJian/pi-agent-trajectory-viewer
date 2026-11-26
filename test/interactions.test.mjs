@@ -152,11 +152,16 @@ test('full application timeline, ledger, detail and responsive interactions', { 
       await page.getByRole('tab', { name: 'Raw', exact: true }).click()
       await page.locator('[data-timeline-record-id="a21"]').click()
       assert.equal(await page.getByRole('tab', { name: 'Raw', exact: true }).getAttribute('aria-selected'), 'true')
+      // 关联记录按钮只在 Preview 标签里，Overview 的分区不再放它们。
       await page.getByRole('tab', { name: 'Overview', exact: true }).click()
+      assert.equal(await page.locator('.detail-navigate').count(), 0)
+      await page.getByRole('tab', { name: 'Preview', exact: true }).click()
       await page.locator('.detail-call-list button').click()
       assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Close details')
       assert.match(await page.locator('.record-details').innerText(), /call-21/)
-      await page.locator('.detail-navigate').first().click()
+      // 工具记录没有 Preview，回到助手要靠列表本身。
+      assert.equal(await page.locator('.detail-navigate').count(), 0)
+      await page.locator('[data-timeline-record-id="a21"]').click()
       assert.match(await page.locator('.record-details').innerText(), /Answer 21/)
       await page.screenshot({ path: `${screenshots}/detail-desktop.png`, fullPage: true })
       await page.getByLabel('Close details').click()

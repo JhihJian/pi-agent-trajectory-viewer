@@ -2,8 +2,62 @@
 .detail-record-content > :is(.long-output, .detail-json, .detail-thinking, .detail-image) { margin-top: 16px; }
 .detail-metadata { padding: 16px 0; border-bottom: 1px solid var(--viewer-border, #e7e3dc); background: var(--white, #fff); }
 .detail-record-content dl dd { white-space: normal; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+/*
+ * 记录详情里的分区列表。表格内嵌详情用等高 flex 让各节自己滚，记录详情面板是
+ * 一篇连续文档：这里退回块级流，由面板整体滚动，一节一条上沿细线把内容分开。
+ * 标题、内容与空提示共用 14px 左基线，避免一列几个缩进。
+ */
 .detail-record-content .detail-sections { display: block; overflow: visible; }
-.detail-record-content .detail-sections > section { margin-top: 18px; }
+
+.detail-record-content .detail-sections > section {
+  flex: none;
+  margin-top: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--viewer-border, #e7e3dc);
+}
+
+/* 第一节紧跟在记录元信息后面，元信息自带下边框，不再叠一条线。 */
+.detail-record-content .detail-sections > section:first-of-type {
+  padding-top: 4px;
+  border-top: 0;
+}
+
+.detail-record-content .detail-sections > section + section { margin-top: 14px; }
+
+.detail-record-content .detail-sections > section > h3 {
+  height: auto;
+  min-height: 0;
+  align-items: baseline;
+  padding: 0 14px 5px;
+  background: none;
+  letter-spacing: 0.02em;
+}
+
+/* 各节的内容盒不再自成一个滚动容器：滚轮事件留给面板，避免卡在节边界。 */
+.detail-record-content .detail-sections > section > div {
+  flex: none;
+  min-height: 0;
+  overflow: visible;
+  background: none;
+  mask-image: none;
+}
+
+/* 分区内的块统一到标题的 14px 基线 */
+.detail-record-content .detail-sections .detail-empty { margin: 6px 14px; }
+.detail-record-content .detail-sections .detail-json { margin: 0 14px; }
+.detail-record-content .detail-sections .detail-navigate { width: calc(100% - 28px); margin: 6px 14px; }
+
+/*
+ * 工具调用的结果状态。这组类此前只写在展示页的样式表里，
+ * 组件库自身没有对应规则，宿主页面里就退化成一串没有缩进和圆点的文字。
+ */
+.tool-status { display: flex; align-items: center; gap: 7px; margin: 10px 14px 2px; color: var(--dsw-alias-label-secondary); font-size: 12px; font-weight: 500; }
+.tool-status-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--dsw-alias-label-primary); }
+.tool-status-complete .tool-status-dot { background: var(--viewer-accent, #5a6b52); }
+.tool-status-error { color: var(--dsw-alias-state-error-primary); }
+.tool-status-error .tool-status-dot { background: var(--dsw-alias-state-error-primary); }
+.tool-status-missing { color: var(--dsw-alias-label-tertiary); }
+.tool-status-missing .tool-status-dot { background: var(--dsw-alias-label-tertiary); }
 .detail-empty { margin: 12px 18px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.6; }
 .detail-text-output + .detail-text-output, .detail-json + .detail-text-output, .detail-text-output + .detail-json { margin-top: 12px; }
 .detail-text-output .long-output-toolbar { flex-wrap: wrap; }

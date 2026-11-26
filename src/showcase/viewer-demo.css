@@ -118,11 +118,6 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .tool-call-summary-title { min-width: 0; overflow: hidden; color: var(--viewer-label); font-family: var(--ds-font-family-code, 'SF Mono', Menlo, Consolas, monospace); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .tool-call-summary-status { flex: none; max-width: 45%; overflow: hidden; color: var(--gray-400); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .tool-call-summary-error { color: #a3564a; }
-.tool-status { display: flex; align-items: center; gap: 7px; margin: 14px 18px 2px; color: var(--gray-600); font-size: 12px; font-weight: 500; }
-.tool-status-error { color: #a3564a; }
-.tool-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray-900); }
-.tool-status-error .tool-status-dot { background: #a3564a; }
-.tool-status-missing .tool-status-dot { background: var(--gray-400); }
 .tool-empty-output { margin: 0 18px; padding: 12px 14px; border: 1px dashed var(--gray-400); color: var(--gray-400); background: #fff; font-size: 12px; line-height: 1.5; }
 .long-output { margin: 0 18px; border: 1px solid var(--viewer-border); overflow: hidden; background: #fff; }
 .long-output-toolbar { display: flex; min-height: 36px; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 9px 6px 12px; border-bottom: 1px solid var(--viewer-border); background: var(--viewer-surface); }

@@ -217,7 +217,6 @@ export function Detail({ cell, onClose, onNavigate, records = [] }) {
           <dl className={`${tableCss.overview} detail-metadata`}><div><dt>Record</dt><dd>{cell.recordId || '—'}</dd></div><div><dt>Time</dt><Timestamp value={cell.startedAt} /></div><div><dt>Duration</dt><dd>{formatDuration(cell.timeSeconds)}</dd></div>{cell.callId && <div><dt>Call ID</dt><dd>{cell.callId}</dd></div>}{cell.toolName && <div><dt>Tool</dt><dd>{cell.toolName}</dd></div>}{cell.raw?.message?.model && <div><dt>Model</dt><dd>{cell.raw.message.model}</dd></div>}</dl>
           <div className={`${tableCss.overviewSections} detail-sections`}>
             {cell.kind === 'tool' ? <><div className={`tool-status tool-status-${cell.isError ? 'error' : hasResult ? 'complete' : 'missing'}`}><span className="tool-status-dot" />{cell.isError ? 'Error' : hasResult ? 'Result recorded' : 'No result recorded'}</div><Section title="Arguments">{toolInput}</Section><Section title="Output">{toolOutput}</Section></> : <Section title={cell.kind === 'compacted' ? 'Summary' : cell.kind === 'user' ? 'Input' : 'Output'}>{content}</Section>}
-            <Navigation cell={cell} records={records} onNavigate={onNavigate} />
             {(cell.kind === 'message' || Object.keys(usageOf(cell)).length > 0) && <Section title="Usage"><Usage cell={cell} records={records} /></Section>}
           </div>
         </>}
