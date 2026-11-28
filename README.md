@@ -129,6 +129,13 @@ const { turns } = parsePiJsonl(sessionText)
 
 完整能力对照、Pi 数据限制和验收方法见 [DeepSeek 交互验收清单](docs/deepseek-parity.md)。
 
+## 阅读视图
+
+Reading 是默认视图，turn 级与卡级两层懒渲染：占位始终在 DOM 里（带 anchor id），进入视口附近才渲染真内容，之后不卸载。左侧目录列出会话根与全部 turn，随滚动高亮当前 turn。
+
+- 点目录里的 turn 条目跳到该 turn 的结尾：落在下一 turn 开头上方，能同时看到本条收尾与下一 turn 标题；最后一条 turn 直接贴底。点根条目回顶部。
+- 懒渲染会在跳转落点附近把占位换成真内容，高度随之变化，跳转后短时间内反复重瞄，落点稳定即收手。
+
 ## 检查
 
 ```bash
