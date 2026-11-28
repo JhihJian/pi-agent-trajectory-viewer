@@ -76,12 +76,22 @@ function assistantThinking(message) {
     .map((block) => block.thinking).filter(Boolean).join('\n').trim()
 }
 
-function buildRows(rows) {
-  const turns = []
+/**
+ * 增量建 turn 的状态机。`buildRows` 是它的全量用法；尾端优先的分页加载是增量用法：
+ * 先 push 尾片的行（turn 编号由索引给），再 push 前面的片。turns 按 turn 编号定位，
+ * 前面的片没到时是稀疏数组的空位。toolResult 先于 toolCall 到达时先建孤儿 cell，
+ * toolCall 到了再回填并把孤儿挪到 toolCall 所在的 group。
+ */
+export function createTurnBuilder(turnCount = 0) {
+  const turns = turnCount > 0 ? Array.from({ length: turnCount }, () => null) : []
   const tools = new Map()
+  // 孤儿 toolResult：toolCallId → cell。回填时按这个找到它。
+  const orphans = new Map()
+  // 全量模式没有索引，turn 按出现顺序编号；current 是最后一个被 push 过的 turn。
   let current = null
   let step = 0
   let index = 0
+  let sparse = turnCount > 0
 
   const pushGroup = (turn, title, cells) => {
     const group = { title, cells }
@@ -89,25 +99,75 @@ function buildRows(rows) {
     return group
   }
 
-  for (const row of rows) {
+  // 定位 turn：有编号用编号，没有就沿用 current 或建一个新的。
+  const ensureTurn = (turnNo) => {
+    if (sparse) {
+      if (turnNo == null) return current
+      if (!turns[turnNo - 1]) turns[turnNo - 1] = newTurn(turnNo)
+      current = turns[turnNo - 1]
+      return current
+    }
+    if (turnNo != null && turns[turnNo - 1]) { current = turns[turnNo - 1]; return current }
+    if (current) return current
+    const created = newTurn(turns.length + 1)
+    turns.push(created)
+    current = created
+    return current
+  }
+
+  // toolCall 到达时，如果它的 toolResult 已经先到（孤儿），把孤儿挪进这个 group 并补齐字段。
+  const adoptOrphan = (tool, callId, group) => {
+    const orphan = orphans.get(callId)
+    if (!orphan) return
+    orphans.delete(callId)
+    const { cell, fromGroup } = orphan
+    const at = fromGroup.cells.indexOf(cell)
+    if (at >= 0) fromGroup.cells.splice(at, 1)
+    Object.assign(tool, {
+      outputDetail: cell.outputDetail, result: cell.result, outputBlocks: cell.outputBlocks,
+      isError: cell.isError, timeSeconds: cell.timeSeconds,
+      raw: { ...tool.raw, result: cell.raw?.result },
+    })
+    // group.cells.push(tool) 由调用方做；这里只负责把孤儿挪走、把空 group 删掉。
+    const owner = turns.find((t) => t?.groups?.includes(fromGroup))
+    if (owner && fromGroup !== group && fromGroup.cells.length === 0) owner.groups.splice(owner.groups.indexOf(fromGroup), 1)
+  }
+
+  // 增量模式下 index 由行号推出：一个 assistant 行可能带多个 toolCall，各占一个 index，
+  // 所以留 1000 的间隔。全量模式沿用计数器，与历史行为一致。
+  const nextIndex = (lineNo, sub = 0) => {
+    if (sparse && lineNo != null) return lineNo * 1000 + sub
     index += 1
+    return index
+  }
+
+  const push = (row, turnNo, lineNo) => {
     if (row.type === 'message' && row.message?.role === 'user') {
       step = 0
-      current = newTurn(turns.length + 1)
-      turns.push(current)
+      // user 行无条件开新 turn。增量模式按编号定位（同一行不会 push 两次），全量模式按顺序追加。
+      let turn
+      if (sparse) {
+        turn = turns[turnNo - 1] ?? (turns[turnNo - 1] = newTurn(turnNo))
+      } else {
+        turn = newTurn(turns.length + 1)
+        turns.push(turn)
+      }
+      current = turn
+      index = nextIndex(lineNo)
       const content = textOf(row.message.content)
       const cell = {
         ...cellBase('user', row, index, content),
         inputDetail: content,
         sourceBlocks: blocksOf(row.message.content).map((block) => ({ type: block.type, content: jsonOf(block) })),
       }
-      pushGroup(current, 'User', [cell])
-      continue
+      pushGroup(turn, 'User', [cell])
+      return
     }
 
     if (row.type === 'message' && row.message?.role === 'assistant') {
-      current = ensureTurn(turns, current, turns.length + 1)
+      const turn = ensureTurn(turnNo)
       step += 1
+      index = nextIndex(lineNo)
       const message = row.message
       const output = assistantText(message)
       const thinking = assistantThinking(message)
@@ -134,10 +194,10 @@ function buildRows(rows) {
           outputTokens: Number.isFinite(message.usage?.output) ? message.usage.output : null,
         },
       }
-      const group = pushGroup(current, `Step ${step}`, [cell])
+      const group = pushGroup(turn, `Step ${step}`, [cell])
       for (const call of calls) {
         const tool = {
-          ...cellBase('tool', row, ++index, call.name || 'Tool call'),
+          ...cellBase('tool', row, nextIndex(lineNo, 1 + calls.indexOf(call)), call.name || 'Tool call'),
           recordId: call.id || `${row.id ?? 'record'}:tool:${index}`,
           raw: { assistant: row, call },
           text: call.name || 'Tool call',
@@ -149,8 +209,9 @@ function buildRows(rows) {
         }
         group.cells.push(tool)
         tools.set(call.id, tool)
+        adoptOrphan(tool, call.id, group)
       }
-      continue
+      return
     }
 
     if (row.type === 'message' && row.message?.role === 'toolResult') {
@@ -170,7 +231,8 @@ function buildRows(rows) {
             ? Math.max(0, (completedAt - tool.startedAt) / 1000)
             : null
       } else {
-        current = ensureTurn(turns, current, turns.length + 1)
+        const turn = ensureTurn(turnNo)
+        index = nextIndex(lineNo, 1)
         const cell = {
           ...cellBase('tool', row, index, result.toolName || 'Tool result'),
           raw: { result: row },
@@ -183,15 +245,18 @@ function buildRows(rows) {
           outputBlocks: blocksOf(result.content).map((block) => ({ type: block.type, content: jsonOf(block) })),
           timeSeconds: Number.isFinite(result.durationMs) ? result.durationMs / 1000 : null,
         }
-        pushGroup(current, `Step ${step || 1}`, [cell])
+        const group = pushGroup(turn, `Step ${step || 1}`, [cell])
+        // 尾端优先时 toolResult 可能先于 toolCall 到达。记下来，toolCall 来了回填。
+        if (sparse && result.toolCallId) orphans.set(result.toolCallId, { cell, fromGroup: group })
       }
-      continue
+      return
     }
 
     if (row.type === 'compaction' || row.type === 'branch_summary') {
-      current = ensureTurn(turns, current, turns.length + 1)
+      const turn = ensureTurn(turnNo)
+      index = nextIndex(lineNo)
       const summary = textOf(row.summary) || textOf(row.message?.content) || row.type
-      pushGroup(current, 'Context', [{
+      pushGroup(turn, 'Context', [{
         ...cellBase('compacted', row, index, summary),
         inputDetail: summary,
         outputDetail: summary,
@@ -199,7 +264,30 @@ function buildRows(rows) {
     }
   }
 
-  return turns
+  const finish = () => {
+    // 增量模式下片是倒序到达的，group 的插入顺序不等于文件顺序。按首个 cell 的 index 排，
+    // 再按文件顺序重编 Step 号：push 时只知道「已到达的」，尾端先到会把 a3 编成 Step 1。
+    if (sparse) {
+      for (const t of turns) {
+        if (!t) continue
+        t.groups.sort((a, b) => (a.cells[0]?.index ?? 0) - (b.cells[0]?.index ?? 0))
+        let n = 0
+        for (const g of t.groups) {
+          if (g.cells[0]?.kind === 'message') g.title = `Step ${++n}`
+          else if (g.cells[0]?.kind === 'tool' && g.title.startsWith('Step')) g.title = `Step ${Math.max(1, n)}`
+        }
+      }
+    }
+    return turns.filter(Boolean)
+  }
+
+  return { push, finish, turns }
+}
+
+function buildRows(rows) {
+  const builder = createTurnBuilder(0)
+  for (const row of rows) builder.push(row)
+  return builder.finish()
 }
 
 // Invalid lines become diagnostics instead of aborting the parse, so a damaged

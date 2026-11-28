@@ -1,4 +1,4 @@
-export { parsePiJsonl, formatTime, formatDuration } from '../lib/parser.js'
+export { createTurnBuilder, parsePiJsonl, formatTime, formatDuration } from '../lib/parser.js'
 export { deriveTrajectoryTimeline, trajectoryTimelineFocusIndexes, formatTimelineOffset, matchesSearch } from '../lib/timeline.js'
 export { flattenTurns, foldTargets, allFolded, toggleFold, toggleAllFolds, toggleCallGroups, foldRecords, projectTimeline } from '../lib/trajectory-view.js'
 export { parsePiSkillInstruction, piSkillReadFromToolCall, parsePiSubagentCall, projectPiSubagentResult, piContentText, piCompactionOf, piGoalControlOf, turnStatusOf } from '../lib/pi-semantics.js'

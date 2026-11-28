@@ -1,4 +1,4 @@
-import React, { useMemo, useId, useRef, useState } from 'react'
+import React, { memo, useEffect, useMemo, useId, useRef, useState } from 'react'
 import { DetailsSplit } from './DetailsSplit.jsx'
 import { Markdown } from './Detail.jsx'
 import { flattenTurns } from '../lib/trajectory-view.js'
@@ -142,6 +142,35 @@ function ReadingTurn({ readingTurn, selectedId, onSelect, anchorPrefix }) {
   </section>
 }
 
+/**
+ * 懒渲染的 turn：占位 section 始终在 DOM 里（有 id，目录跳转与 activeTurn 判定不受影响），
+ * 进入视口附近才渲染真内容，之后不卸载（Markdown 不重复解析）。
+ *
+ * `eager` 为真时直接渲染：贴底看最新时最后一个 turn 立即可见，搜索结果集小也全渲染。
+ */
+const LazyTurn = memo(function LazyTurn({ readingTurn, eager, selectedId, onSelect, anchorPrefix }) {
+  const [shown, setShown] = useState(eager)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (eager || shown) return
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setShown(true); io.disconnect() }
+    }, { rootMargin: '100% 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [eager, shown])
+  // 占位高度按 card 数估：user ~120，assistant 文本 ~160，tool ~220。偏差由真内容替换后自然修正。
+  const estimate = readingTurn.cards.reduce((h, c) => h + (c.kind === 'user' ? 120 : c.kind === 'tool' ? 220 : 160), 60)
+  if (!shown) {
+    return <section className="reading-turn reading-turn-placeholder" id={`${anchorPrefix}-turn-${readingTurn.turn}`} data-outline-turn={readingTurn.turn} ref={ref} style={{ minHeight: estimate }} aria-busy="true">
+      <div className="reading-turn-head"><span className="reading-turn-title">Turn {readingTurn.turn}</span></div>
+    </section>
+  }
+  return <ReadingTurn readingTurn={readingTurn} selectedId={selectedId} onSelect={onSelect} anchorPrefix={anchorPrefix} />
+})
+
 export function ReadingView({ turns, selectedId = null, onSelect, query = '', title = 'Session', rules, className = '' }) {
   const records = useMemo(() => flattenTurns(turns), [turns])
   const readingTurns = useMemo(() => projectReadingTurns(turns, { rules }), [turns, rules])
@@ -176,7 +205,7 @@ export function ReadingView({ turns, selectedId = null, onSelect, query = '', ti
         <ReadingOutline outline={outline} activeTurn={query ? null : activeTurn} onJump={jumpTo} />
         <div className="reading-thread">
           {visible.length === 0 && <div className="view-empty"><h2>{query ? 'No matching cards' : 'Nothing to read in this session'}</h2><p>{query ? 'Try another keyword or clear the search field.' : 'This session has no message records to project.'}</p></div>}
-          {visible.map(readingTurn => <ReadingTurn key={readingTurn.turn} readingTurn={readingTurn} selectedId={selectedId} onSelect={onSelect} anchorPrefix={anchorPrefix} />)}
+          {visible.map((readingTurn, i) => <LazyTurn key={readingTurn.turn} readingTurn={readingTurn} eager={query !== '' || i === visible.length - 1} selectedId={selectedId} onSelect={onSelect} anchorPrefix={anchorPrefix} />)}
         </div>
       </div>
     </div>
