@@ -4,7 +4,7 @@ import { Markdown } from './Detail.jsx'
 import { flattenTurns } from '../lib/trajectory-view.js'
 import { filterReadingTurns, projectReadingTurns, projectReadingOutline } from '../lib/reading-view.js'
 import { formatDuration, formatTime } from '../lib/parser.js'
-import { ReadingOutline, useActiveReadingTurn } from './ReadingOutline.jsx'
+import { ReadingOutline, turnEndTop, useActiveReadingTurn } from './ReadingOutline.jsx'
 import './styles/views.css'
 
 const statusLabels = { complete: 'Complete', running: 'Running', waiting: 'Waiting', failed: 'Failed', aborted: 'Aborted', context: 'Context' }
@@ -204,24 +204,47 @@ export function ReadingView({ turns, selectedId = null, onSelect, query = '', ti
   const outline = useMemo(() => projectReadingOutline(visible, title), [visible, title])
   const anchorPrefix = useId().replace(/[^a-zA-Z0-9-]/g, '')
   const paneRef = useRef(null)
-  const flashRef = useRef(null)
+  const retargetRef = useRef(null)
   const activeTurn = useActiveReadingTurn(paneRef, anchorPrefix, visible.length, !query)
-  const jumpTo = (turn, cardIndex = null) => {
-    const target = document.getElementById(cardIndex == null ? `${anchorPrefix}-turn-${turn}` : `${anchorPrefix}-card-${turn}-${cardIndex}`)
+  /**
+   * 目录跳转。turn 条目（mode 为 'end'）跳的是这个 turn 的结尾：落在下一 turn 开头上方
+   * 32px，看得到下一 turn 的标题，最后一条 turn 直接贴底；其余条目跳条目开头。
+   * 全程瞬时定位，不做动画：长距离 smooth 会被懒渲染回流打断，落点不可控。懒渲染把
+   * 落点附近的占位换成真内容后高度会变，跳转后短时间内反复重瞄，落点稳定即收手。
+   */
+  const jumpTo = (turn, cardIndex = null, mode = null) => {
     const pane = paneRef.current
-    if (!target || !pane) return
-    const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-    // Scroll the pane itself: scrollIntoView would also scroll the host page.
-    const top = target.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 44
-    pane.scrollTo({ top: Math.max(0, top), behavior })
-    const section = cardIndex == null ? target : target.closest('.reading-turn')
-    if (section && behavior === 'smooth') {
-      section.classList.remove('reading-jump-flash')
-      void section.offsetWidth
-      section.classList.add('reading-jump-flash')
-      clearTimeout(flashRef.current)
-      flashRef.current = setTimeout(() => section.classList.remove('reading-jump-flash'), 1400)
+    if (!pane) return
+    const aimTop = () => {
+      // root 条目是会话根：回顶部。
+      if (turn == null && cardIndex == null) return 0
+      if (turn != null && cardIndex == null && mode === 'end') return turnEndTop(pane, anchorPrefix, turn)
+      const target = document.getElementById(cardIndex == null ? `${anchorPrefix}-turn-${turn}` : `${anchorPrefix}-card-${turn}-${cardIndex}`)
+      if (!target) return null
+      // Scroll the pane itself: scrollIntoView would also scroll the host page.
+      return Math.max(0, target.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 44)
     }
+    const top = aimTop()
+    if (top == null) return
+    if (retargetRef.current) clearInterval(retargetRef.current)
+    pane.scrollTo({ top, behavior: 'auto' })
+    let last = null
+    let stable = 0
+    const startedAt = performance.now()
+    const timer = setInterval(() => {
+      const next = aimTop()
+      if (next == null || performance.now() - startedAt >= 1600) { clearInterval(timer); retargetRef.current = null; return }
+      pane.scrollTo({ top: next, behavior: 'auto' })
+      stable = Math.abs(next - last) <= 1 && Math.abs(next - pane.scrollTop) <= 1 ? stable + 1 : 0
+      last = next
+      if (stable >= 2) {
+        clearInterval(timer)
+        retargetRef.current = null
+        // 高度回流不触发 scroll，补一次让 active 高亮按最终落点重算。
+        pane.dispatchEvent(new Event('scroll'))
+      }
+    }, 120)
+    retargetRef.current = timer
   }
   const cards = visible.reduce((total, readingTurn) => total + readingTurn.cards.length, 0)
   return <DetailsSplit selected={selectedId ? records.find((record) => record.cell.recordId === selectedId)?.cell ?? null : null} records={records} onSelect={onSelect} onClose={() => onSelect?.(null)} className={className}>

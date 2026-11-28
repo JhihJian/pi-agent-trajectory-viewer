@@ -16,10 +16,22 @@ export function ReadingOutline({ outline, activeTurn = null, onJump, className =
   </nav>
 }
 
+/**
+ * 目录跳转的目标：turn 是目录条目，null 是会话根（顶部），'end' 是末尾空隙。
+ * 下一 turn 开头减去 32px 落在两 turn 之间的空隙，看得到下一 turn 的标题，且落点重瞄
+ * 容差（±12px）叠加后仍不越过 outline 高亮判定的 64px 阈值。没有下一 turn（最后一条）时贴底。
+ */
+export function turnEndTop(pane, anchorPrefix, turn) {
+  const next = document.getElementById(`${anchorPrefix}-turn-${turn + 1}`)
+  if (!next) return pane.scrollHeight
+  return Math.max(0, next.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 32)
+}
+
 function ReadingOutlineTurn({ entry, active, onJump }) {
   const [open, setOpen] = useState(true)
   const hasChildren = entry.context.length > 0
-  const jump = () => onJump?.(entry.turn)
+  // 点 turn 条目是「跳到这个 turn 的结尾」，不是开头：目录条目本身不占视口，跳开头看不到本条内容。
+  const jump = () => onJump?.(entry.turn, null, 'end')
   return <div className="reading-outline-group">
     <div className="reading-outline-item turn" role="button" tabIndex={0} data-active={active || undefined} onClick={jump} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); jump() } }}>
       <span className="reading-outline-icon" aria-hidden="true">T</span>

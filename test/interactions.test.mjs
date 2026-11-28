@@ -72,6 +72,44 @@ test('full application timeline, ledger, detail and responsive interactions', { 
     await page.goto(`http://127.0.0.1:${server.httpServer.address().port}#/viewer`)
     await page.locator('input[type=file]').waitFor({ state: 'attached' })
     await load()
+    await t.test('outline turn click lands at that turn’s end', async () => {
+      // 其余用例在 Ledger 下进行；#/viewer 首次导入文件后才挂出 Reading 视图。先切 Ledger
+      // 再切回 Reading，点 Turn 12 的目录条目，动画结束后本 turn 结尾与下一 turn 标题
+      // 应落在视口内，active 跟到 Turn 13。
+      await page.setViewportSize({ width: 1440, height: 960 })
+      await page.getByRole('button', { name: 'Ledger view' }).click()
+      await page.locator('.record-table [data-kind]').first().waitFor()
+      await page.getByRole('button', { name: 'Reading view' }).click()
+      await page.locator('.reading-outline-item.turn', { hasText: 'Turn 12' }).click()
+      // 等两件事：Turn 13 标题落进视口，且目录高亮（80ms 节流测量）跟上变为 Turn 13。
+      const ok = await page.waitForFunction(() => {
+        const head = document.querySelector('.view-pane [data-outline-turn="13"] .reading-turn-head')
+        if (!head || head.getBoundingClientRect().top < 0 || head.getBoundingClientRect().bottom > innerHeight) return false
+        return document.querySelector('.reading-outline-item.turn[data-active=true] strong')?.textContent === 'Turn 13'
+      }, null, { timeout: 15000 }).catch(() => false)
+      if (!ok) {
+        console.log('DEBUG-DIAG', JSON.stringify(await page.evaluate(() => ({
+          actives: [...document.querySelectorAll('.reading-outline-item[data-active=true]')].map(s => s.textContent),
+          paneState: [...document.querySelectorAll('.view-pane')].map(p => ({ sh: p.scrollHeight, st: p.scrollTop, ch: p.clientHeight })),
+          head13: Math.round(document.querySelector('.view-pane [data-outline-turn="13"] .reading-turn-head')?.getBoundingClientRect().top ?? -999),
+          placeholders: document.querySelectorAll('.reading-turn-placeholder').length,
+        }))))
+        await page.screenshot({ path: `${screenshots}/outline-fail.png` })
+      }
+      assert.ok(ok, 'Turn 13 head in view and outline active on Turn 13')
+      // 点 root 回顶部。顶部时 Turn 1 距 pane 顶仅 36px，按测量规则高亮归 Turn 1（或根条目）。
+      await page.locator('.reading-outline-item.root').click()
+      await page.waitForFunction(() => {
+        const pane = document.querySelector('.view-pane')
+        if (pane.scrollTop >= 50) return false
+        const active = document.querySelector('.reading-outline-item[data-active=true]')?.className ?? ''
+        return active.includes('root') || /Turn 1/.test(document.querySelector('.reading-outline-item.turn[data-active=true] strong')?.textContent ?? '')
+      }, null, { timeout: 15000 })
+      await page.screenshot({ path: `${screenshots}/outline-jump-end.png`, fullPage: false })
+      // 后面的用例都在 Ledger 下进行，结束时切回去。
+      await page.getByRole('button', { name: 'Ledger view' }).click()
+      await page.locator('.record-table [data-kind]').first().waitFor()
+    })
     await t.test('forward/reverse range, context dimming, clear and scroll to unmounted records', async () => {
       await drag(.62, .79)
       assert.match(await status(), /21 in range/)
