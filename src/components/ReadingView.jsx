@@ -123,21 +123,47 @@ function ContextCard({ card, anchor }) {
   </section>
 }
 
+/**
+ * 一张卡的懒渲染：占位 div 占着位置（有 anchor id），进入视口附近才渲染真内容，之后不卸载。
+ * 一个 turn 里可能有上百张卡（大会话的最后一个 turn 尤其如此），全渲染会把首屏拖到半秒以上。
+ */
+const LazyCard = memo(function LazyCard({ card, index, readingTurn, selectedId, onSelect, anchorPrefix, eager }) {
+  const [shown, setShown] = useState(eager)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (eager || shown) return
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setShown(true); io.disconnect() }
+    }, { rootMargin: '100% 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [eager, shown])
+  const anchor = card.kind === 'context' ? `${anchorPrefix}-card-${readingTurn.turn}-${index}` : undefined
+  if (!shown) {
+    return <div ref={ref} id={anchor} className={`reading-card-placeholder reading-card-${card.kind}`} style={{ minHeight: card.kind === 'user' ? 120 : card.kind === 'tool' ? 220 : 160 }} aria-busy="true" />
+  }
+  const selected = Boolean(card.cell?.recordId && card.cell.recordId === selectedId)
+  if (card.kind === 'user') return <UserCard card={card} anchor={anchor} />
+  if (card.kind === 'assistant') return <AssistantCard card={card} anchor={anchor} />
+  if (card.kind === 'tool') return <ToolCard card={card} selected={selected} onSelect={onSelect} anchor={anchor} />
+  return <ContextCard card={card} anchor={anchor} />
+})
+
 function ReadingTurn({ readingTurn, selectedId, onSelect, anchorPrefix }) {
+  // 贴底看最新：最后一个 turn 的最后几张卡直接渲染，其余懒渲染。
+  const n = readingTurn.cards.length
+  const EAGER_TAIL = 6
   return <section className="reading-turn" id={`${anchorPrefix}-turn-${readingTurn.turn}`} data-outline-turn={readingTurn.turn}>
     <div className="reading-turn-head">
       <span className="reading-turn-title">Turn {readingTurn.turn}</span>
       <StatusPill status={readingTurn.status} />
     </div>
     <div role="list">
-      {readingTurn.cards.map((card, index) => {
-        const selected = Boolean(card.cell?.recordId && card.cell.recordId === selectedId)
-        const anchor = card.kind === 'context' ? `${anchorPrefix}-card-${readingTurn.turn}-${index}` : undefined
-        if (card.kind === 'user') return <UserCard key={index} card={card} anchor={anchor} />
-        if (card.kind === 'assistant') return <AssistantCard key={index} card={card} anchor={anchor} />
-        if (card.kind === 'tool') return <ToolCard key={index} card={card} selected={selected} onSelect={onSelect} anchor={anchor} />
-        return <ContextCard key={index} card={card} anchor={anchor} />
-      })}
+      {readingTurn.cards.map((card, index) => (
+        <LazyCard key={index} card={card} index={index} readingTurn={readingTurn} selectedId={selectedId} onSelect={onSelect} anchorPrefix={anchorPrefix} eager={index >= n - EAGER_TAIL} />
+      ))}
     </div>
   </section>
 }
